@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Вход для сотрудников — ИЗГИ</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="Служебный вход для сотрудников школы ИЗГИ: личные задачи, сроки и панель директора.">
+<meta name="theme-color" content="#eef7fa">
+<link rel="icon" href="assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Montserrat:wght@400;600;700;800&family=Unbounded:wght@500;600;700;800&display=swap&subset=cyrillic">
+<link rel="stylesheet" href="css/staff.css">
+</head>
+<body>
+
+<main class="login-page">
+  <div class="login-shell">
+    <aside class="login-side">
+      <a class="s-brand" href="index.html" aria-label="ИЗГИ — на главную">
+        <span class="s-brand-mark" aria-hidden="true">И</span>
+        <span class="s-brand-text"><strong>ИЗГИ</strong><small>учебно-воспитательный комплекс</small></span>
+      </a>
+
+      <div class="login-copy">
+        <p class="s-eyebrow">Служебный доступ</p>
+        <h1>Задачи школы —<br><em>под рукой</em></h1>
+        <p>Личный кабинет сотрудника: что нужно сделать, до какого срока и что уже на проверке. Директор видит общую картину и ставит задачи команде.</p>
+        <ul class="login-points">
+          <li>Только свои задачи и понятные дедлайны</li>
+          <li>Статус работы меняется в один клик</li>
+          <li>Директор сразу видит, кто чем занят</li>
+        </ul>
+      </div>
+
+      <div class="login-side-foot">
+        <a class="login-back" href="index.html">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+          Вернуться на сайт
+        </a>
+        <span class="login-tag">Только для сотрудников</span>
+      </div>
+    </aside>
+
+    <section class="login-main" aria-labelledby="loginTitle">
+      <div class="login-card">
+        <div class="session-box" id="sessionBox" hidden>
+          <p class="s-eyebrow">Активная сессия</p>
+          <div class="session-user">
+            <span class="s-avatar" id="sessAvatar" aria-hidden="true">И</span>
+            <div>
+              <strong id="sessName">Сотрудник</strong>
+              <span id="sessPosition">Школа ИЗГИ</span>
+            </div>
+          </div>
+          <div class="session-actions">
+            <a class="s-btn pri full" id="sessContinue" href="tasks.html">Продолжить</a>
+            <button class="s-btn ghost full" id="sessLogout" type="button">Выйти из аккаунта</button>
+          </div>
+          <p class="login-note" id="sessHint">Вы уже вошли в этом браузере.</p>
+        </div>
+
+        <div id="formBox">
+          <p class="s-eyebrow">Вход</p>
+          <h2 id="loginTitle">Панель сотрудника</h2>
+          <p class="login-lead">Введите логин и пароль, которые выдал директор. Сотрудник попадает к своим задачам, директор — в панель управления.</p>
+
+          <form class="login-form" id="loginForm" novalidate>
+            <div class="s-field">
+              <label for="loginInput">Логин</label>
+              <input class="s-input" id="loginInput" name="login" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="например, teacher" required>
+            </div>
+            <div class="s-field">
+              <label for="passwordInput">Пароль</label>
+              <div class="pass-wrap">
+                <input class="s-input" id="passwordInput" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+                <button class="pass-toggle" id="passToggle" type="button" aria-controls="passwordInput" aria-pressed="false">Показать</button>
+              </div>
+            </div>
+            <p class="s-error" id="loginError" role="alert" aria-live="polite"></p>
+            <button class="s-btn pri login-submit" id="loginSubmit" type="submit">
+              Войти
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+          </form>
+
+          <p class="login-note">Не получается войти? Обратитесь к директору — он создаёт аккаунты и меняет пароли.</p>
+
+          </div>
+
+        </div>
+    </section>
+  </div>
+</main>
+
+<script src="js/avatar.js" defer></script>
+<script src="js/sync.js" defer></script>
+<script src="js/staff-auth.js" defer></script>
+<script src="js/staff.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Панель директора — ИЗГИ</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Montserrat:wght@400;600;700;800&family=Unbounded:wght@500;600;700;800&display=swap&subset=cyrillic">
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/staff.css">
+<script src="js/avatar.js" defer></script>
+<script src="js/content-data.js" defer></script>
+<script src="js/site-data.js" defer></script>
+<script src="js/i18n.js" defer></script>
+<script src="js/sync.js" defer></script>
+<script src="js/staff-auth.js" defer></script>
+<script src="js/tasks-store.js" defer></script>
+<script src="js/admin.js" defer></script>
+<script src="js/staff-ui.js" defer></script>
+<script src="js/admin-tasks.js" defer></script>
+</head>
+<body hidden>
+<header class="abar">
+  <div class="brand">
+    <span class="logo">ИЗГИ</span>
+    <div><strong>Панель директора</strong><small>задачи, сотрудники и контент сайта</small></div>
+  </div>
+  <div class="acts">
+    <div class="who" title="Текущий пользователь">
+      <span class="s-avatar" id="dirAvatar" aria-hidden="true">Д</span>
+      <div class="who-text"><strong id="dirName">Директор школы</strong><small id="dirRole">Директор · полный доступ</small></div>
+    </div>
+    <a class="btn ghost" href="index.html" title="Вернуться на сайт">← На сайт</a>
+    <span class="status" id="status">Готово</span>
+    <button class="btn sec" id="btnSave" type="button" data-content-act>Сохранить</button>
+    <button class="btn pri" id="btnPublish" type="button" data-content-act>Опубликовать файл</button>
+    <button class="btn ghost" id="btnPreview" type="button" data-content-act>Предпросмотр</button>
+    <button class="btn ghost" id="btnLogout" type="button">Выйти</button>
+  </div>
+</header>
+
+<nav class="atabs" id="tabs" aria-label="Разделы панели">
+  <button type="button" data-tab="tasks" class="on">Задачи</button>
+  <button type="button" data-tab="staff">Сотрудники</button>
+  <button type="button" data-tab="texts">Тексты</button>
+  <button type="button" data-tab="schedule">Расписание</button>
+  <button type="button" data-tab="news">Новости</button>
+  <button type="button" data-tab="team">Команда</button>
+  <button type="button" data-tab="contacts">Контакты</button>
+  <button type="button" data-tab="data">Данные</button>
+</nav>
+
+<main class="wrap">
+
+  <section class="panel" data-panel="tasks">
+    <div class="panelhead">
+      <div>
+        <h2>Задачи сотрудников</h2>
+        <p class="hint">Назначайте задачи, ставьте дедлайны и следите за статусами. Сотрудник видит свои задачи после входа на страницу «Для сотрудников».</p>
+      </div>
+      <span class="role-pill">Только директор</span>
+    </div>
+
+    <div class="t-stats" aria-label="Сводка по задачам">
+      <button type="button" class="t-stat" data-go="all" title="Показать задачи">
+        <strong id="dirStatActive">0</strong>
+        <span>Активных задач</span>
+      </button>
+      <button type="button" class="t-stat" data-go="progress" title="Показать задачи">
+        <strong id="dirStatProgress">0</strong>
+        <span>Сейчас в работе</span>
+      </button>
+      <button type="button" class="t-stat" data-go="review" title="Показать задачи">
+        <strong id="dirStatReview">0</strong>
+        <span>Ждут проверки</span>
+      </button>
+      <button type="button" class="t-stat warn" data-go="overdue" title="Показать задачи">
+        <strong id="dirStatOverdue">0</strong>
+        <span>Просрочено</span>
+      </button>
+    </div>
+
+    <h3 class="t-subtitle">Кто чем занят сейчас</h3>
+    <div class="t-board" id="dirBoard"></div>
+
+    <div class="t-layout">
+      <form class="formcard t-form" id="taskForm" novalidate>
+        <h3 id="taskFormTitle">Новая задача</h3>
+        <div class="t-form-fields">
+          <div class="s-field">
+            <label for="taskTitle">Название задачи</label>
+            <input class="inp" id="taskTitle" type="text" maxlength="120" placeholder="Например, подготовить план открытого урока" required>
+          </div>
+          <div class="s-field">
+            <label for="taskDesc">Описание</label>
+            <textarea class="ta" id="taskDesc" rows="3" maxlength="600" placeholder="Что именно нужно сделать и что считается результатом"></textarea>
+          </div>
+          <div class="s-field">
+            <label for="taskAssignee">Сотрудник</label>
+            <select class="sel" id="taskAssignee" required></select>
+          </div>
+          <div class="t-form-row">
+            <div class="s-field">
+              <label for="taskDue">Дедлайн</label>
+              <input class="inp" id="taskDue" type="date" required>
+            </div>
+            <div class="s-field">
+              <label for="taskPriority">Приоритет</label>
+              <select class="sel" id="taskPriority">
+                <option value="normal">Обычный</option>
+                <option value="high">Высокий</option>
+                <option value="low">Низкий</option>
+              </select>
+            </div>
+          </div>
+          <p class="s-error" id="taskError" role="alert" aria-live="polite"></p>
+          <div class="t-form-actions">
+            <button class="btn pri" id="taskSubmit" type="submit">Назначить задачу</button>
+            <button class="btn ghost" id="taskCancel" type="button" hidden>Отмена</button>
+          </div>
+        </div>
+      </form>
+
+      <div class="t-list-wrap">
+        <div class="t-list-head">
+          <div>
+            <h3>Все задачи</h3>
+            <p class="counter" id="taskCount"></p>
+          </div>
+          <div class="t-filters">
+            <select class="sel" id="taskFilterEmployee" aria-label="Фильтр по сотруднику">
+              <option value="">Все сотрудники</option>
+            </select>
+            <select class="sel" id="taskFilterStatus" aria-label="Фильтр по статусу">
+              <option value="">Все статусы</option>
+              <option value="new">Новые</option>
+              <option value="progress">В работе</option>
+              <option value="review">На проверке</option>
+              <option value="done">Выполненные</option>
+            <option value="overdue">Просроченные</option>
+            </select>
+          </div>
+        </div>
+        <div class="t-list" id="taskAdminList"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="staff" hidden>
+    <div class="panelhead">
+      <div>
+        <h2>Сотрудники</h2>
+        <p class="hint">Создавайте аккаунты для входа, меняйте пароли и удаляйте доступ. Логин и пароль нужно передать сотруднику лично.</p>
+      </div>
+      <span class="role-pill">Только директор</span>
+    </div>
+
+    <div class="t-staff-grid">
+      <form class="formcard t-staff-form" id="staffForm" novalidate>
+        <h3>Новый аккаунт</h3>
+        <div class="t-form-fields">
+          <div class="s-field">
+            <label for="staffName">Имя и фамилия</label>
+            <input class="inp" id="staffName" type="text" maxlength="60" placeholder="Айгуль Осмонова" required>
+          </div>
+          <div class="s-field">
+            <label for="staffPosition">Должность</label>
+            <input class="inp" id="staffPosition" type="text" maxlength="80" placeholder="Учитель начальных классов" required>
+          </div>
+          <div class="s-field">
+            <label for="staffLogin">Логин</label>
+            <input class="inp" id="staffLogin" type="text" maxlength="24" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="например, a.osmonova" required>
+            <span class="s-hint">3–24 символа: латиница, цифры, точка, дефис или _.</span>
+          </div>
+          <div class="s-field">
+            <label for="staffPassword">Пароль</label>
+            <input class="inp" id="staffPassword" type="text" maxlength="64" autocomplete="off" placeholder="не короче 6 символов" required>
+          </div>
+          <p class="s-error" id="staffError" role="alert" aria-live="polite"></p>
+          <div class="t-form-actions">
+            <button class="btn pri" type="submit">Создать аккаунт</button>
+          </div>
+          <div class="staff-created" id="staffCreated" hidden></div>
+        </div>
+      </form>
+
+      <div>
+        <div class="t-list-head">
+          <h3>Аккаунты</h3>
+          <span class="counter" id="staffCount"></span>
+        </div>
+        <div class="t-staff-list" id="staffList"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="texts" hidden>
+    <h2>Тексты сайта</h2>
+    <p class="hint">Все надписи трёх языков. Правки сохраняются сразу и видны на сайте после обновления страницы. Зелёная полоска слева — изменённая строка.</p>
+    <div class="toolbar">
+      <input class="inp grow" id="tSearch" type="search" placeholder="Поиск по ключу или по тексту…">
+      <select class="sel" id="tGroup" style="max-width:220px"></select>
+      <select class="sel" id="tLang" style="max-width:110px">
+        <option value="ru">RU</option>
+        <option value="kg">KG</option>
+        <option value="en">EN</option>
+      </select>
+      <label class="chk"><input type="checkbox" id="tChanged"> только изменённые</label>
+      <span class="counter" id="tCount"></span>
+    </div>
+    <div class="rows" id="tRows"></div>
+  </section>
+
+  <section class="panel" data-panel="schedule" hidden>
+    <h2>Расписание звонков</h2>
+    <p class="hint">Время начала и конца, название занятия и его длительность. Пока правок нет — используется расписание из вёрстки. «Вернуть из вёрстки» удаляет все изменения расписания.</p>
+    <div class="tbl">
+      <div class="tr th"><span>Занятие</span><span>Начало</span><span>Конец</span><span>Длительность</span><span></span></div>
+      <div id="schedRows"></div>
+    </div>
+    <div class="actsrow">
+      <button class="btn sec" id="schedAdd" type="button">+ Добавить занятие</button>
+      <button class="btn ghost" id="schedReset" type="button">Вернуть из вёрстки</button>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="news" hidden>
+    <h2>Новости</h2>
+    <p class="hint">Четыре стандартные новости редактируются во вкладке «Тексты» (ключи news1–news4). Здесь можно добавить свои — они появятся на странице «Новости» снизу.</p>
+    <div class="cards" id="newsList"></div>
+    <div class="formcard">
+      <h3>Новая новость</h3>
+      <div class="langs3" style="margin-bottom:10px">
+        <div><span class="lbl">Категория</span><select class="sel" id="nCat"><option value="event">Событие</option><option value="notice">Объявление</option></select></div>
+        <div><span class="lbl">Цвет карточки</span><input class="inp" id="nColor" type="color" value="#01a09c"></div>
+        <div><span class="lbl">Дата (RU / KG / EN)</span><input class="inp" id="nDate" placeholder="12 марта 2026"></div>
+      </div>
+      <div class="langs3">
+        <div><span class="lbl">Заголовок RU</span><input class="inp" id="nH3ru" placeholder="День открытых дверей"></div>
+        <div><span class="lbl">Заголовок KG</span><input class="inp" id="nH3kg" placeholder="Эшик күнү"></div>
+        <div><span class="lbl">Заголовок EN</span><input class="inp" id="nH3en" placeholder="Open day"></div>
+      </div>
+      <div class="langs3" style="margin-top:10px">
+        <div><span class="lbl">Текст RU</span><textarea class="ta" id="nPru"></textarea></div>
+        <div><span class="lbl">Текст KG</span><textarea class="ta" id="nPkg"></textarea></div>
+        <div><span class="lbl">Текст EN</span><textarea class="ta" id="nPen"></textarea></div>
+      </div>
+      <div style="margin-top:10px"><span class="lbl">Фото (необязательно)</span><input type="file" accept="image/*" id="nPhoto"><img id="nPhotoPrev" class="ph-prev" alt="" hidden></div>
+<div class="actsrow" style="margin-top:12px">
+        <button class="btn pri" id="nAdd" type="button">Добавить новость</button>
+        <span class="counter" id="nCount"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="team" hidden>
+    <h2>Команда</h2>
+    <p class="hint">Стандартные четверо правятся во вкладке «Тексты» (ключи team1–team4). Здесь можно добавить новых сотрудников.</p>
+    <div class="cards" id="teamList"></div>
+    <div class="formcard">
+      <h3>Новый сотрудник</h3>
+      <div class="langs3" style="margin-bottom:10px">
+        <div><span class="lbl">Буква в кружке</span><input class="inp" id="tLetter" maxlength="2" placeholder="А"></div>
+        <div><span class="lbl">Цвет карточки</span><input class="inp" id="tColor" type="color" value="#113fd2"></div>
+        <div><span class="lbl">Имя (RU / KG / EN)</span><input class="inp" id="tName" placeholder="Имя Фамилия"></div>
+      </div>
+      <div class="langs3">
+        <div><span class="lbl">Должность RU</span><input class="inp" id="tRoleRu"></div>
+        <div><span class="lbl">Должность KG</span><input class="inp" id="tRoleKg"></div>
+        <div><span class="lbl">Должность EN</span><input class="inp" id="tRoleEn"></div>
+      </div>
+      <div class="langs3" style="margin-top:10px">
+        <div><span class="lbl">Описание RU</span><textarea class="ta" id="tDescRu"></textarea></div>
+        <div><span class="lbl">Описание KG</span><textarea class="ta" id="tDescKg"></textarea></div>
+        <div><span class="lbl">Описание EN</span><textarea class="ta" id="tDescEn"></textarea></div>
+      </div>
+      <div style="margin-top:10px"><span class="lbl">Фото (необязательно)</span><input type="file" accept="image/*" id="tPhoto"><img id="tPhotoPrev" class="ph-prev" alt="" hidden></div>
+<div class="actsrow" style="margin-top:12px">
+        <button class="btn pri" id="tAdd" type="button">Добавить сотрудника</button>
+        <span class="counter" id="tCount2"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="contacts" hidden>
+    <h2>Контакты и реквизиты</h2>
+    <p class="hint">Самые ходовые поля — телефон, почта, адрес и часы работы. Подходят для всех трёх языков.</p>
+    <div class="rows" id="cRows"></div>
+  </section>
+
+  <section class="panel" data-panel="data" hidden>
+    <h2>Данные и публикация</h2>
+    <p class="hint">Правки хранятся в этом браузере (localStorage) и сразу применяются ко всем страницам сайта. Чтобы правки увидели все, опубликуйте файл и замените им <code>js/content-data.js</code>.</p>
+    <ol class="steps">
+      <li>Нажмите «Опубликовать файл» — скачается <code>content-data.js</code>.</li>
+      <li>Положите его в папку <code>js/</code> рядом с сайтом, заменив текущий файл.</li>
+      <li>Обновите страницы сайта (Ctrl+F5) — изменения появятся у всех.</li>
+    </ol>
+    <div class="actsrow" style="margin-bottom:16px">
+      <button class="btn pri" id="btnPublish2" type="button">Опубликовать файл</button>
+      <button class="btn sec" id="btnExport" type="button">Скачать JSON</button>
+      <button class="btn ghost" id="btnImport" type="button">Загрузить JSON</button>
+      <input type="file" id="fileImport" accept="application/json,.json" hidden>
+      <button class="btn danger" id="btnReset" type="button">Сбросить все правки</button>
+    </div>
+    <pre class="json" id="jsonView"></pre>
+  </section>
+
+</main>
+
+<div class="drawer" id="drawer" hidden>
+  <header>
+    <select id="pvPage">
+      <option value="index.html">Главная</option>
+      <option value="about.html">О школе</option>
+      <option value="education.html">Обучение</option>
+      <option value="team.html">Команда</option>
+      <option value="schedule.html">Расписание</option>
+      <option value="news.html">Новости</option>
+      <option value="contacts.html">Контакты</option>
+    </select>
+    <button class="iconbtn" id="pvReload" type="button" title="Обновить">⟳</button>
+    <button class="iconbtn" id="pvNew" type="button" title="Открыть в новой вкладке">↗</button>
+    <button class="iconbtn" id="pvClose" type="button" title="Закрыть">✕</button>
+  </header>
+  <iframe id="pvFrame" title="Предпросмотр"></iframe>
+</div>
+
+</body>
+</html>

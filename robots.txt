@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /staff.html
+Disallow: /tasks.html
+Disallow: /js/
+
+# Сайт статический: укажите домен после публикации и добавьте строку
+# Sitemap: https://example.com/sitemap.xml

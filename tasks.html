@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Мои задачи — ИЗГИ</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="Личные задачи сотрудника школы ИЗГИ.">
+<meta name="theme-color" content="#eef7fa">
+<link rel="icon" href="assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Montserrat:wght@400;600;700;800&family=Unbounded:wght@500;600;700;800&display=swap&subset=cyrillic">
+<link rel="stylesheet" href="css/staff.css">
+</head>
+<body hidden>
+
+<header class="staff-top">
+  <div class="s-shell staff-top-inner">
+    <a class="s-brand" href="tasks.html" aria-label="ИЗГИ — мои задачи">
+      <span class="s-brand-mark" aria-hidden="true">И</span>
+      <span class="s-brand-text"><strong>ИЗГИ</strong><small>личный кабинет</small></span>
+    </a>
+
+    <nav class="staff-top-nav" aria-label="Навигация кабинета">
+      <a class="staff-top-link" href="tasks.html" aria-current="page">Мои задачи</a>
+      <a class="staff-top-link" href="index.html">На сайт</a>
+    </nav>
+
+    <div class="staff-me">
+      <span class="s-avatar" id="meAvatar" aria-hidden="true">И</span>
+      <div>
+        <strong id="meName">Сотрудник</strong>
+        <span id="mePosition">Школа ИЗГИ</span>
+      </div>
+    </div>
+
+    <button class="staff-exit" id="btnLogout" type="button">Выйти</button>
+  </div>
+</header>
+
+<main class="s-shell tasks-shell tasks-page">
+  <div class="tasks-head">
+    <div>
+      <p class="s-eyebrow">Личный кабинет</p>
+      <h1>Здравствуйте, <span id="greetName">коллега</span></h1>
+      <p>Задачи от директора и их статус.</p>
+    </div>
+    <span class="date-chip" id="todayChip"></span>
+  </div>
+
+  <div class="t-stats" aria-label="Сводка по задачам">
+    <button type="button" class="t-stat" data-go="all" title="Показать задачи">
+      <strong id="statActive">0</strong>
+      <span>Активных задач</span>
+    </button>
+    <button type="button" class="t-stat" data-go="progress" title="Показать задачи">
+      <strong id="statProgress">0</strong>
+      <span>Сейчас в работе</span>
+    </button>
+    <button type="button" class="t-stat" data-go="review" title="Показать задачи">
+      <strong id="statReview">0</strong>
+      <span>На проверке</span>
+    </button>
+    <button type="button" class="t-stat warn" data-go="overdue" title="Показать задачи">
+      <strong id="statOverdue">0</strong>
+      <span>Просрочено</span>
+    </button>
+  </div>
+
+  <section class="t-now" aria-labelledby="nowTitle">
+    <div class="t-now-head">
+      <p class="s-eyebrow">Сейчас в работе</p>
+      <span class="s-badge" id="nowCount">0</span>
+    </div>
+    <h2 class="t-now-title" id="nowTitle">Загружаем задачи…</h2>
+    <div class="t-now-meta" id="nowMeta"></div>
+    <div class="t-now-list" id="nowList"></div>
+    <div class="t-now-empty" id="nowEmpty" hidden>Нет задач в работе. Возьмите новую задачу из списка ниже.</div>
+  </section>
+
+  <section class="t-section" aria-labelledby="allTasksTitle">
+    <div class="t-section-head">
+      <div>
+        <h2 id="allTasksTitle">Все мои задачи</h2>
+        <p>Сначала — то, что ближе к дедлайну.</p>
+      </div>
+      <div class="t-filters" id="taskFilters" role="group" aria-label="Фильтр задач">
+        <button class="t-filter on" type="button" data-filter="all">Все <span class="n">0</span></button>
+        <button class="t-filter" type="button" data-filter="new">Новые <span class="n">0</span></button>
+        <button class="t-filter" type="button" data-filter="progress">В работе <span class="n">0</span></button>
+        <button class="t-filter" type="button" data-filter="review">На проверке <span class="n">0</span></button>
+        <button class="t-filter" type="button" data-filter="done">Выполнено <span class="n">0</span></button>
+        <button class="t-filter" type="button" data-filter="overdue">Просрочено <span class="n">0</span></button>
+      </div>
+    </div>
+    <div class="t-list" id="taskList"></div>
+  </section>
+</main>
+
+<div class="s-toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/avatar.js" defer></script>
+<script src="js/sync.js" defer></script>
+<script src="js/staff-auth.js" defer></script>
+<script src="js/tasks-store.js" defer></script>
+<script src="js/staff-ui.js" defer></script>
+<script src="js/tasks.js" defer></script>
+</body>
+</html>
