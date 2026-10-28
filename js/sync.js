@@ -1,6 +1,7 @@
 /* ИЗГИ — связь с сервером. Держит локальную копию данных (задачи, сотрудники, фото, контент)
    и синхронизирует её с /api. Должен подключаться раньше staff-auth.js. */
 (function () {
+  const API = window.IZGI_API || '/api';
   const SK = 'izgi.session.v2';
   const K = { users: 'izgi.staff.users.v1', tasks: 'izgi.tasks.v1', av: 'izgi.avatars.v1', content: 'izgi.content.v1' };
   const raw = Storage.prototype.setItem;
@@ -19,7 +20,7 @@
   function req(method, path, body) {
     const x = new XMLHttpRequest();
     try {
-      x.open(method, '/api' + path, false);
+      x.open(method, API + path, false);
       x.setRequestHeader('content-type', 'application/json');
       if (token()) x.setRequestHeader('authorization', 'Bearer ' + token());
       x.send(body ? JSON.stringify(body) : null);
@@ -51,7 +52,7 @@
   }
   function send(method, path, body) {
     pending++;
-    return fetch('/api' + path, { method, headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token() }, body: JSON.stringify(body) })
+    return fetch(API + path, { method, headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token() }, body: JSON.stringify(body) })
       .then(async (r) => {
         const d = await r.json().catch(() => ({}));
         if (r.status === 401) { clear(); location.replace('staff.html'); return; }
@@ -77,7 +78,7 @@
 
   setInterval(() => {
     if (document.hidden || !token() || pending) return;
-    fetch('/api/state', { headers: { authorization: 'Bearer ' + token() } })
+    fetch(API + '/state', { headers: { authorization: 'Bearer ' + token() } })
       .then((r) => (r.status === 401 ? (clear(), location.replace('staff.html'), null) : r.ok ? r.json() : null))
       .then((st) => { if (st && st.tasks && !pending) apply(st, true); }).catch(() => {});
   }, 15000);

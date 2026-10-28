@@ -1,27 +1,16 @@
 # Сайт школы ИЗГИ
 
-Публичный сайт + кабинет сотрудников + панель директора. Серверная часть работает на Netlify Functions
-(`netlify/functions/api.mjs`), данные хранятся в Supabase (Postgres). Пароли хранятся только в виде хэша.
+Публичный сайт + кабинет сотрудников + панель директора.
+Сайт — статические файлы (GitHub Pages). Серверная часть — Supabase Edge Function `supabase/functions/api/index.ts`,
+данные лежат в таблице `kv` (см. `supabase.sql`). Пароли хранятся только как хэш.
 
-## Запуск на Netlify (один раз)
-0. Supabase: создайте проект, откройте SQL Editor и выполните файл `supabase.sql`. Затем Project Settings → API: скопируйте Project URL и ключ `service_role` (секретный, никому не показывать и не хранить в коде).
-1. Загрузите папку в репозиторий GitHub.
-2. Netlify → Add new site → Import from Git → выберите репозиторий. Настройки по умолчанию подходят.
-3. Site configuration → Environment variables, добавьте:
-   - `SUPABASE_URL` и `SUPABASE_SERVICE_KEY` (подойдёт и имя `SUPABASE_SERVICE_ROLE_KEY`) — адрес проекта и секретный ключ;
-   - `AUTH_SECRET` — любая случайная строка от 32 символов;
-   - `DIRECTOR_LOGIN` и `DIRECTOR_PASSWORD` — логин и пароль директора (пароль от 6 символов);
-   - `DIRECTOR_NAME` — имя директора (необязательно).
-4. Запустите повторную публикацию (Deploys → Trigger deploy).
-5. Откройте `/staff`, войдите как директор и создайте аккаунты сотрудников во вкладке «Сотрудники».
+## Настройка (один раз)
+1. Supabase → SQL Editor: выполнить `supabase.sql` (создаёт таблицу).
+2. Supabase → Edge Functions → создать функцию `api`, вставить код из `supabase/functions/api/index.ts`,
+   в настройках функции выключить «Verify JWT» и нажать Deploy.
+3. Edge Functions → Secrets: добавить `AUTH_SECRET` (случайная строка от 32 символов), `DIRECTOR_LOGIN`, `DIRECTOR_PASSWORD`
+   (и при желании `DIRECTOR_NAME`).
+4. GitHub: репозиторий → Settings → Pages → Deploy from a branch → `main` / `(root)`.
+5. Открыть адрес сайта, `/staff.html`, войти как директор и создать сотрудников.
 
-Директор создаётся автоматически при первом входе. Сменить его пароль потом можно во вкладке «Сотрудники».
-
-## Локальная проверка
-`npm i -g netlify-cli`, затем `netlify dev` в папке проекта (переменные задаются в `.env`).
-Через Live Server входа не будет: у него нет серверной части.
-
-## Что где
-- `js/sync.js` — связь с сервером, `js/staff-auth.js` — вход и аккаунты;
-- `js/tasks-store.js` — задачи, `js/avatar.js` — фото, `js/admin.js` — правка контента сайта.
-- Новости, команда, тексты и расписание, которые директор меняет в панели, сразу видны всем посетителям.
+Адрес функции записан в `js/config.js`. Директор создаётся автоматически при первом входе.
