@@ -8,7 +8,7 @@
 1. Загрузите папку в репозиторий GitHub.
 2. Netlify → Add new site → Import from Git → выберите репозиторий. Настройки по умолчанию подходят.
 3. Site configuration → Environment variables, добавьте:
-   - `SUPABASE_URL` и `SUPABASE_SERVICE_KEY` — адрес проекта и ключ service_role;
+   - `SUPABASE_URL` и `SUPABASE_SERVICE_KEY` (подойдёт и имя `SUPABASE_SERVICE_ROLE_KEY`) — адрес проекта и секретный ключ;
    - `AUTH_SECRET` — любая случайная строка от 32 символов;
    - `DIRECTOR_LOGIN` и `DIRECTOR_PASSWORD` — логин и пароль директора (пароль от 6 символов);
    - `DIRECTOR_NAME` — имя директора (необязательно).

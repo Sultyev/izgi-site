@@ -4,9 +4,10 @@ import { createHmac, scryptSync, randomBytes, timingSafeEqual } from "node:crypt
 
 export const config = { path: ["/api/*", "/js/content-data.js"] };
 
+const SKEY = () => String(process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
 const BASE = () => String(process.env.SUPABASE_URL || "").replace(/\/$/, "") + "/rest/v1/kv";
 const HEAD = () => {
-  const k = String(process.env.SUPABASE_SERVICE_KEY || "").trim();
+  const k = SKEY();
   return { apikey: k, ...(k.startsWith("eyJ") ? { authorization: "Bearer " + k } : {}), "content-type": "application/json" };
 };
 const get = async (k, d) => {
@@ -132,8 +133,8 @@ async function handle(req) {
 
 export default async (req) => {
   const isJs = new URL(req.url).pathname.endsWith("/content-data.js");
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
-    return isJs ? new Response("window.IZGI_DATA={};", { headers: { "content-type": "application/javascript" } }) : json({ error: "Сервер не настроен: задайте SUPABASE_URL и SUPABASE_SERVICE_KEY." }, 500);
+  if (!process.env.SUPABASE_URL || !SKEY()) {
+    return isJs ? new Response("window.IZGI_DATA={};", { headers: { "content-type": "application/javascript" } }) : json({ error: "Сервер не настроен: задайте SUPABASE_URL и SUPABASE_SERVICE_KEY (или SUPABASE_SERVICE_ROLE_KEY)." }, 500);
   }
   try { return await handle(req); } catch (e) {
     return isJs ? new Response("window.IZGI_DATA={};", { headers: { "content-type": "application/javascript" } }) : json({ error: "Ошибка базы данных. Попробуйте ещё раз." }, 500);
