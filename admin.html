@@ -180,6 +180,7 @@
             <label for="staffPassword">Пароль</label>
             <input class="inp" id="staffPassword" type="text" maxlength="64" autocomplete="off" placeholder="не короче 6 символов" required>
           </div>
+          <div class="s-field" id="staffLevelField"> <label for="staffLevel">Права</label> <select class="inp" id="staffLevel"> <option value="limited">Ограниченные: свои задачи</option> <option value="full">Полные: как у директора</option> </select> <span class="s-hint">Отдельные права (задачи, контент, аккаунты) настраиваются кнопкой «Изменить».</span> </div>
           <p class="s-error" id="staffError" role="alert" aria-live="polite"></p>
           <div class="t-form-actions">
             <button class="btn pri" type="submit">Создать аккаунт</button>

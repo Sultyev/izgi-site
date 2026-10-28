@@ -35,7 +35,7 @@
     const home = auth.homeFor(user);
     const next = readNext();
     if (!next) return home;
-    const allowed = user.role === 'director' ? 'admin.html' : 'tasks.html';
+    const allowed = auth.isAdmin(user) ? 'admin.html' : 'tasks.html';
     return next.page === allowed ? next.raw : home;
   }
 
@@ -57,10 +57,10 @@
     const continueLink = $('#sessContinue');
     const target = destinationFor(user);
     continueLink.href = target;
-    continueLink.textContent = user.role === 'director'
+    continueLink.textContent = auth.isAdmin(user)
       ? 'Открыть панель директора'
       : 'Перейти к моим задачам';
-    $('#sessHint').textContent = user.role === 'director'
+    $('#sessHint').textContent = auth.isAdmin(user)
       ? 'Вы вошли как директор: доступны задачи всей команды и управление сотрудниками.'
       : 'Вы вошли как сотрудник: здесь только ваши задачи и сроки.';
     $('#sessLogout').onclick = () => {

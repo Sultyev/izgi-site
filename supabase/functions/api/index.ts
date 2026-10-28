@@ -39,7 +39,11 @@ const unsign = async (t) => {
   try { const p = JSON.parse(new TextDecoder().decode(unb64u(b))); return p.exp > Date.now() ? p : null; } catch { return null; }
 };
 const rand = () => hex(crypto.getRandomValues(new Uint8Array(5)));
-const pub = (u) => ({ id: u.id, name: u.name, position: u.position, role: u.role, login: u.login, color: u.color });
+const full = (u) => u.role === "director" || u.level === "full";
+const can = (u, p) => full(u) || !!(u.perms && u.perms[p]);
+const canEdit = (me, u) => (me.role === "director" ? true : u.role === "director" ? false : full(u) ? full(me) : can(me, "staff"));
+const pub = (u) => ({ id: u.id, name: u.name, position: u.position, role: u.role, login: u.login, color: u.color, level: full(u) ? "full" : "limited", perms: u.perms || {} });
+const checkLogin = (l, list, self) => (!/^[a-z0-9._-]{3,24}$/.test(l) ? "Логин: 3–24 символа, только латиница, цифры, точка, дефис или _." : list.some((x) => x.login === l && x.id !== self) ? "Такой логин уже занят." : "");
 const STATUS = ["new", "progress", "review", "done"];
 const COLORS = ["#01a09c", "#113fd2", "#0d2e7b", "#7fdcd3", "#00a79d"];
 
@@ -67,17 +71,18 @@ async function handle(req) {
   if (path === "/login" && m === "POST") {
     const u = list.find((x) => x.login === String(body.login || "").trim().toLowerCase());
     if (!u || !(await verify(String(body.password || ""), u.pass))) { await new Promise((r) => setTimeout(r, 700)); return json({ error: "Неверный логин или пароль." }, 401); }
-    return json({ token: await sign({ uid: u.id, exp: Date.now() + 8 * 3600e3 }), user: pub(u) });
+    return json({ token: await sign({ uid: u.id, v: u.tv || 0, exp: Date.now() + 8 * 3600e3 }), user: pub(u) });
   }
   const tok = await unsign((req.headers.get("authorization") || "").replace(/^Bearer /, ""));
-  const me = tok && list.find((x) => x.id === tok.uid);
+  const me0 = tok && list.find((x) => x.id === tok.uid);
+  const me = me0 && (tok.v || 0) === (me0.tv || 0) ? me0 : null;
   if (!me) return json({ error: "Нужно войти." }, 401);
-  const dir = me.role === "director";
+  const dir = can(me, "tasks");
   const mine = (t) => dir || t.assigneeId === me.id;
 
   if (path === "/state" && m === "GET") {
     const out = { users: list.map(pub), tasks: (await get("tasks", [])).filter(mine), avatars: await get("avatars", {}) };
-    if (dir) out.content = await get("content", {});
+    if (can(me, "content")) out.content = await get("content", {});
     return json(out);
   }
   if (path === "/tasks" && m === "PUT") {
@@ -93,7 +98,8 @@ async function handle(req) {
   }
   if (path === "/avatars" && m === "PUT") {
     const id = String(body.id || "");
-    if (!dir && id !== me.id) return json({ error: "Нет доступа." }, 403);
+    const tgt = list.find((x) => x.id === id);
+    if (id !== me.id && !(tgt && canEdit(me, tgt))) return json({ error: "Нет доступа." }, 403);
     const a = await get("avatars", {});
     if (body.data) {
       if (!/^data:image\/jpeg;base64,/.test(body.data) || body.data.length > 90000) return json({ error: "Фото слишком большое." }, 413);
@@ -103,21 +109,20 @@ async function handle(req) {
     return json({ ok: true });
   }
   if (path === "/content" && m === "PUT") {
-    if (!dir) return json({ error: "Нет доступа." }, 403);
+    if (!can(me, "content")) return json({ error: "Нет доступа." }, 403);
     await put("content", body.content || {});
     return json({ ok: true });
   }
   if (path.startsWith("/users")) {
-    if (!dir) return json({ ok: false, error: "Нет доступа." }, 403);
+    if (!can(me, "staff")) return json({ ok: false, error: "Нет доступа." }, 403);
     const id = path.split("/")[2];
     if (m === "POST" && !id) {
       const name = String(body.name || "").trim(), position = String(body.position || "").trim(), login = String(body.login || "").trim().toLowerCase(), pw = String(body.password || "");
       if (name.length < 2) return json({ ok: false, error: "Укажите имя сотрудника." }, 400);
       if (position.length < 2) return json({ ok: false, error: "Укажите должность." }, 400);
-      if (!/^[a-z0-9._-]{3,24}$/.test(login)) return json({ ok: false, error: "Логин: 3–24 символа, только латиница, цифры, точка, дефис или _." }, 400);
+      const le = checkLogin(login, list, ""); if (le) return json({ ok: false, error: le }, le.startsWith("Такой") ? 409 : 400);
       if (pw.length < 6) return json({ ok: false, error: "Пароль должен быть не короче 6 символов." }, 400);
-      if (list.some((x) => x.login === login)) return json({ ok: false, error: "Такой логин уже занят." }, 409);
-      const u = { id: "u-" + rand(), name, position, role: "employee", login, pass: await hash(pw), color: COLORS[list.length % COLORS.length] };
+            const u = { id: "u-" + rand(), name, position, role: "employee", level: full(me) && body.level === "full" ? "full" : "limited", perms: {}, login, pass: await hash(pw), color: COLORS[list.length % COLORS.length] };
       list.push(u);
       await put("users", list);
       return json({ ok: true, user: pub(u) });
@@ -125,14 +130,34 @@ async function handle(req) {
     const u = list.find((x) => x.id === id);
     if (!u) return json({ ok: false, error: "Сотрудник не найден." }, 404);
     if (m === "DELETE") {
-      if (u.role === "director" || u.id === me.id) return json({ ok: false, error: "Этот аккаунт удалить нельзя." }, 400);
+      if (u.role === "director" || u.id === me.id || !canEdit(me, u)) return json({ ok: false, error: "Этот аккаунт удалить нельзя." }, 400);
       await put("users", list.filter((x) => x.id !== id));
       return json({ ok: true });
     }
+    if (m === "PUT" && !path.endsWith("/password")) {
+      if (!canEdit(me, u)) return json({ ok: false, error: "Нет доступа к этому аккаунту." }, 403);
+      let creds = false;
+      if (body.name !== undefined) { const v = String(body.name).trim(); if (v.length < 2) return json({ ok: false, error: "Укажите имя сотрудника." }, 400); u.name = v; }
+      if (body.position !== undefined) { const v = String(body.position).trim(); if (v.length < 2) return json({ ok: false, error: "Укажите должность." }, 400); u.position = v; }
+      if (body.login !== undefined) { const l = String(body.login).trim().toLowerCase(); if (l !== u.login) { const le = checkLogin(l, list, u.id); if (le) return json({ ok: false, error: le }, 400); u.login = l; creds = true; } }
+      if (body.password) { if (String(body.password).length < 6) return json({ ok: false, error: "Пароль должен быть не короче 6 символов." }, 400); u.pass = await hash(String(body.password)); creds = true; }
+      if (body.level !== undefined || body.perms !== undefined) {
+        if (!full(me) || u.role === "director" || u.id === me.id) return json({ ok: false, error: "Менять права этого аккаунта нельзя." }, 403);
+        u.level = body.level === "full" ? "full" : "limited";
+        const pr = body.perms || {};
+        u.perms = u.level === "full" ? {} : { tasks: !!pr.tasks, staff: !!pr.staff, content: !!pr.content };
+      }
+      if (creds) u.tv = (u.tv || 0) + 1;
+      await put("users", list);
+      const extra = creds && u.id === me.id ? { token: await sign({ uid: u.id, v: u.tv || 0, exp: tok.exp }) } : {};
+      return json({ ok: true, user: pub(u), ...extra });
+    }
     if (m === "PUT" && path.endsWith("/password")) {
+      if (!canEdit(me, u)) return json({ ok: false, error: "Нет доступа к этому аккаунту." }, 403);
       const pw = String(body.password || "");
       if (pw.length < 6) return json({ ok: false, error: "Пароль должен быть не короче 6 символов." }, 400);
       u.pass = await hash(pw);
+      u.tv = (u.tv || 0) + 1;
       await put("users", list);
       return json({ ok: true });
     }

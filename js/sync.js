@@ -7,7 +7,8 @@
   const raw = Storage.prototype.setItem;
   const sess = () => { try { return JSON.parse(sessionStorage.getItem(SK) || 'null'); } catch (e) { return null; } };
   const token = () => (sess() || {}).token || '';
-  const role = () => ((sess() || {}).user || {}).role;
+  const meNow = () => { const s = sess(); if (!s) return null; try { return JSON.parse(localStorage.getItem(K.users) || '[]').find((u) => u.id === s.user.id) || s.user; } catch (e) { return s.user; } };
+  const canContent = () => { const u = meNow(); return !!u && (u.role === 'director' || u.level === 'full' || !!(u.perms && u.perms.content)); };
   let lastAv = {}, pending = 0;
   const timers = {};
 
@@ -68,7 +69,7 @@
     raw.call(this, k, v);
     if (this !== localStorage || !token()) return;
     if (k === K.tasks) later('t', () => send('PUT', '/tasks', { tasks: JSON.parse(v) }));
-    else if (k === K.content && role() === 'director') later('c', () => send('PUT', '/content', { content: JSON.parse(v) }));
+    else if (k === K.content && canContent()) later('c', () => send('PUT', '/content', { content: JSON.parse(v) }));
     else if (k === K.av) {
       const n = JSON.parse(v);
       Object.keys(Object.assign({}, lastAv, n)).forEach((id) => { if (n[id] !== lastAv[id]) send('PUT', '/avatars', { id, data: n[id] || null }); });

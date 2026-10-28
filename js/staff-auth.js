@@ -22,7 +22,11 @@
     if (!s || !s.token || !s.exp || s.exp < Date.now()) { logout(); return null; }
     return users().find((u) => u.id === s.user.id) || s.user;
   }
-  const homeFor = (user) => (user && user.role === 'director' ? 'admin.html' : 'tasks.html');
+  const isFull = (u) => !!u && (u.role === 'director' || u.level === 'full');
+  const can = (u, p) => isFull(u) || !!(u && u.perms && u.perms[p]);
+  const isAdmin = (u) => !!u && (isFull(u) || ['tasks', 'staff', 'content'].some((p) => can(u, p)));
+  const homeFor = (user) => (isAdmin(user) ? 'admin.html' : 'tasks.html');
+  const levelLabel = (u) => (u.role === 'director' ? 'Директор' : isFull(u) ? 'Полные права' : isAdmin(u) ? 'Расширенные права' : 'Сотрудник');
   function requireRole(role) {
     const user = current();
     if (!user) {
@@ -30,7 +34,7 @@
       location.replace('staff.html?next=' + encodeURIComponent(page));
       return null;
     }
-    if ((role === 'director' && user.role !== 'director') || (role === 'employee' && user.role === 'director')) {
+    if ((role === 'director' && !isAdmin(user)) || (role === 'employee' && user.role === 'director')) {
       location.replace(homeFor(user));
       return null;
     }
@@ -43,9 +47,18 @@
   const addUser = (d) => done(S.req('POST', '/users', d), 'Не удалось создать аккаунт.');
   const removeUser = (id) => done(S.req('DELETE', '/users/' + encodeURIComponent(id)), 'Не удалось удалить сотрудника.');
   const setPassword = (id, password) => done(S.req('PUT', '/users/' + encodeURIComponent(id) + '/password', { password }), 'Не удалось сохранить пароль.');
+  function editUser(id, patch) {
+    const r = S.req('PUT', '/users/' + encodeURIComponent(id), patch);
+    if (r.status === 200 && r.data.ok) {
+      if (r.data.token) { const s = S.session(); s.token = r.data.token; S.setSession(s); }
+      S.boot(); emit();
+      return { ok: true, user: r.data.user };
+    }
+    return { ok: false, error: r.data.error || 'Не удалось сохранить.' };
+  }
   const roleLabel = (role) => ROLE[role] || ROLE.employee;
 
   try { addEventListener('storage', (e) => { if (e.key === USERS_KEY) emit(); }); } catch (e) { /* noop */ }
-  Object.assign(api, { USERS_KEY, SESSION_KEY, users, login, logout, current, homeFor, requireRole, addUser, removeUser, setPassword, roleLabel });
+  Object.assign(api, { USERS_KEY, SESSION_KEY, users, login, logout, current, homeFor, requireRole, addUser, removeUser, setPassword, editUser, isFull, can, isAdmin, levelLabel, roleLabel });
   window.StaffAuth = api;
 })();

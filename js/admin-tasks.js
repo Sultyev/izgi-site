@@ -8,7 +8,7 @@
   if (!auth || !store) return;
 
   const me = auth.current();
-  if (!me || me.role !== 'director') return;
+  if (!me || !auth.isAdmin(me)) return;
 
   let editingId = null;
   let toastTimer = null;
@@ -355,26 +355,28 @@
     }
 
     box.innerHTML = list.map(user => {
-      const actions = user.role === 'director'
-        ? '<span class="s-badge director">Полный доступ</span>'
-        : `<button class="btn sm ghost" type="button" data-reset-id="${esc(user.id)}">Сбросить пароль</button>
-           <button class="btn sm danger" type="button" data-remove-id="${esc(user.id)}">Удалить</button>`;
+      const editable = canEdit(user);
+      const badge = user.role === 'director'
+        ? '<span class="s-badge director">Директор</span>'
+        : auth.isFull(user) ? '<span class="s-badge director">Полные права</span>'
+        : `<span class="s-badge role">${esc(permsText(user))}</span>`;
+      const actions = (editable ? `<button class="btn sm" type="button" data-edit-id="${esc(user.id)}">Изменить</button>` : '')
+        + (editable && user.role !== 'director' && user.id !== me.id ? `<button class="btn sm danger" type="button" data-remove-id="${esc(user.id)}">Удалить</button>` : '');
       return `
         <div class="s-account">
-          <span class="s-avatar" data-uid="${esc(user.id)}" data-edit="1">${esc(initials(user.name))}</span>
+          <span class="s-avatar" data-uid="${esc(user.id)}"${editable ? ' data-edit="1"' : ''}>${esc(initials(user.name))}</span>
           <div class="s-account-main">
             <strong>${esc(user.name)}</strong>
             <span>${esc(user.position)}</span>
-            <div class="s-account-login">
-              <code>${esc(user.login)}</code>
-              <span class="s-badge ${user.role === 'director' ? 'director' : 'role'}">${esc(auth.roleLabel(user.role))}</span>
-            </div>
+            <div class="s-account-login"><code>${esc(user.login)}</code>${badge}</div>
           </div>
           <div class="s-account-actions">${actions}</div>
         </div>`;
     }).join('');
   }
 
+  const lvlField = $('#staffLevelField');
+  if (lvlField) lvlField.hidden = !auth.isFull(me);
   const staffForm = $('#staffForm');
   const staffError = $('#staffError');
   const staffCreated = $('#staffCreated');
@@ -389,7 +391,7 @@
     const login = $('#staffLogin').value.trim();
     const password = $('#staffPassword').value;
 
-    const result = auth.addUser({ name, position, login, password });
+    const result = auth.addUser({ name, position, login, password, level: ($('#staffLevel') || {}).value || 'limited' });
     if (!result.ok) {
       staffError.textContent = result.error;
       return;
@@ -411,37 +413,103 @@
     if (input) input.addEventListener('input', () => { staffError.textContent = ''; });
   });
 
-  $('#staffList').addEventListener('click', event => {
-    const reset = event.target.closest('[data-reset-id]');
-    if (reset) {
-      const user = auth.users().find(item => item.id === reset.dataset.resetId);
-      if (!user) return;
-      const password = prompt('Новый пароль для «' + user.name + '» (не короче 6 символов):');
-      if (password === null) return;
-      const result = auth.setPassword(user.id, password);
-      if (!result.ok) {
-        showToast(result.error);
-        return;
-      }
-      showToast('Пароль изменён. Передайте его сотруднику лично.');
-      return;
-    }
+  /* ---------- редактор аккаунта и права ---------- */
 
+  const owner = user => user.role === 'director';
+  function canEdit(user) { return owner(me) ? true : owner(user) ? false : auth.isFull(user) ? auth.isFull(me) : auth.can(me, 'staff'); }
+  function canRights(user) { return auth.isFull(me) && !owner(user) && user.id !== me.id; }
+  function permsText(user) {
+    const p = user.perms || {};
+    const t = [p.tasks && 'Задачи', p.staff && 'Аккаунты', p.content && 'Контент сайта'].filter(Boolean);
+    return t.length ? t.join(' · ') : 'Сотрудник';
+  }
+
+  const dlg = document.createElement('dialog');
+  dlg.className = 'acc-dialog';
+  dlg.innerHTML = `<form id="accForm" class="acc-form" novalidate>
+    <h3 id="accTitle">Аккаунт</h3>
+    <div class="acc-photo"><span class="s-avatar" id="accAva"></span><div class="acc-photo-btns"><button class="btn sm" type="button" id="accPhoto">Загрузить фото</button><button class="btn sm ghost" type="button" id="accPhotoDel">Убрать фото</button></div></div>
+    <div class="s-field"><label for="accName">Имя и фамилия</label><input class="inp" id="accName" maxlength="60"></div>
+    <div class="s-field"><label for="accPos">Должность</label><input class="inp" id="accPos" maxlength="80"></div>
+    <div class="s-field"><label for="accLogin">Логин</label><input class="inp" id="accLogin" maxlength="24" autocapitalize="none"></div>
+    <div class="s-field"><label for="accPass">Новый пароль</label><input class="inp" id="accPass" maxlength="64" placeholder="Оставьте пустым, чтобы не менять"></div>
+    <fieldset class="acc-rights" id="accRights"><legend>Права доступа</legend>
+      <label class="acc-opt"><input type="radio" name="accLevel" value="limited"> Ограниченные: только свои задачи и фото</label>
+      <label class="acc-opt"><input type="radio" name="accLevel" value="full"> Полные: все возможности директора</label>
+      <div class="acc-perms" id="accPerms">
+        <span class="acc-hint">Дополнительно к ограниченным:</span>
+        <label class="acc-opt"><input type="checkbox" data-perm="tasks"> Задачи сотрудников</label>
+        <label class="acc-opt"><input type="checkbox" data-perm="staff"> Аккаунты сотрудников</label>
+        <label class="acc-opt"><input type="checkbox" data-perm="content"> Контент сайта</label>
+      </div>
+    </fieldset>
+    <p class="s-error" id="accError" role="alert"></p>
+    <div class="t-form-actions"><button class="btn pri" type="submit">Сохранить</button><button class="btn ghost" type="button" id="accCancel">Отмена</button></div>
+  </form>`;
+  document.body.appendChild(dlg);
+  let editing = null;
+  const level = () => (dlg.querySelector('input[name=accLevel]:checked') || {}).value || 'limited';
+  const syncPerms = () => { $('#accPerms').hidden = level() === 'full'; };
+  dlg.querySelectorAll('input[name=accLevel]').forEach(r => r.addEventListener('change', syncPerms));
+  $('#accCancel').addEventListener('click', () => dlg.close());
+
+  function openEditor(user) {
+    editing = user;
+    $('#accTitle').textContent = user.name;
+    const ava = $('#accAva');
+    ava.textContent = initials(user.name);
+    ava.dataset.uid = user.id;
+    window.IZGI_AVATAR && window.IZGI_AVATAR.scan();
+    $('#accName').value = user.name;
+    $('#accPos').value = user.position;
+    $('#accLogin').value = user.login;
+    $('#accPass').value = '';
+    $('#accError').textContent = '';
+    const rights = canRights(user);
+    $('#accRights').hidden = !rights;
+    dlg.querySelectorAll('input[name=accLevel]').forEach(r => { r.checked = r.value === (auth.isFull(user) ? 'full' : 'limited'); });
+    dlg.querySelectorAll('[data-perm]').forEach(c => { c.checked = !!(user.perms && user.perms[c.dataset.perm]); });
+    syncPerms();
+    dlg.showModal();
+  }
+
+  $('#accPhoto').addEventListener('click', async () => {
+    try {
+      const url = await window.IZGI_AVATAR.pick(192, true, .82);
+      if (!window.IZGI_AVATAR.set(editing.id, url)) return showToast('Не хватило места в браузере');
+      window.IZGI_AVATAR.scan();
+    } catch (e) { if (e) showToast(String(e)); }
+  });
+  $('#accPhotoDel').addEventListener('click', () => { window.IZGI_AVATAR.del(editing.id); window.IZGI_AVATAR.scan(); });
+
+  $('#accForm').addEventListener('submit', event => {
+    event.preventDefault();
+    const patch = { name: $('#accName').value, position: $('#accPos').value, login: $('#accLogin').value };
+    if ($('#accPass').value) patch.password = $('#accPass').value;
+    if (!$('#accRights').hidden) {
+      patch.level = level();
+      patch.perms = {};
+      dlg.querySelectorAll('[data-perm]').forEach(c => { patch.perms[c.dataset.perm] = c.checked; });
+    }
+    const result = auth.editUser(editing.id, patch);
+    if (!result.ok) { $('#accError').textContent = result.error; return; }
+    dlg.close();
+    showToast(patch.password ? 'Сохранено. Новый пароль передайте сотруднику лично.' : 'Изменения сохранены');
+    renderEmployeeSelects(); renderBoard(); renderAccounts(); renderTaskList();
+  });
+
+  $('#staffList').addEventListener('click', event => {
+    const edit = event.target.closest('[data-edit-id]');
+    if (edit) { const u = auth.users().find(item => item.id === edit.dataset.editId); if (u) openEditor(u); return; }
     const remove = event.target.closest('[data-remove-id]');
     if (!remove) return;
     const user = auth.users().find(item => item.id === remove.dataset.removeId);
     if (!user) return;
     if (!confirm('Удалить аккаунт «' + user.name + '»? Задачи останутся в списке — их можно будет переназначить.')) return;
     const result = auth.removeUser(user.id);
-    if (!result.ok) {
-      showToast(result.error);
-      return;
-    }
+    if (!result.ok) { showToast(result.error); return; }
     showToast('Аккаунт удалён');
-    renderEmployeeSelects();
-    renderBoard();
-    renderAccounts();
-    renderTaskList();
+    renderEmployeeSelects(); renderBoard(); renderAccounts(); renderTaskList();
   });
 
   /* ---------- общие обновления ---------- */

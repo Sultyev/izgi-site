@@ -12,7 +12,7 @@
   const initials=String(me.name||'').trim().split(/\s+/).slice(0,2).map(p=>p.charAt(0)).join('').toUpperCase()||'Д';
   if($('#dirAvatar')){$('#dirAvatar').textContent=initials;$('#dirAvatar').dataset.uid=me.id;$('#dirAvatar').dataset.edit='1'}
   if($('#dirName'))$('#dirName').textContent=me.name;
-  if($('#dirRole'))$('#dirRole').textContent=auth.roleLabel(me.role)+' · полный доступ';
+  if($('#dirRole'))$('#dirRole').textContent=auth.levelLabel(me);
   if($('#btnLogout'))$('#btnLogout').addEventListener('click',()=>{auth.logout();location.replace('staff.html')});
   const DICT=(window.I18N&&window.I18N.dict)||{};
   const LANGS=['ru','kg','en'];
@@ -393,4 +393,13 @@ $('#nAdd').addEventListener('click',()=>{
   const initial=(location.hash||'').replace(/^#/,'');
   showTab($$('#tabs button').some(b=>b.dataset.tab===initial)?initial:'tasks',false);
   const ready=$('#status');if(ready)ready.textContent='Панель готова';
+
+  (function gate(){
+    const need={tasks:'tasks',staff:'staff'};
+    const tabs=$$('#tabs button');
+    tabs.forEach(b=>{if(!auth.can(me,need[b.dataset.tab]||'content'))b.hidden=true});
+    const first=tabs.find(b=>!b.hidden),on=tabs.find(b=>b.classList.contains('on'));
+    if(first&&(!on||on.hidden))first.click();
+    if(me.role!=='director'){const a=document.createElement('a');a.className='btn ghost';a.href='tasks.html';a.textContent='Мои задачи';const lo=$('#btnLogout');if(lo&&lo.parentNode)lo.parentNode.insertBefore(a,lo)}
+  })();
 })();

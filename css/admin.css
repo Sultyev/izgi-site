@@ -145,3 +145,18 @@ button.t-stat:focus-visible{outline:3px solid #0057b8;outline-offset:2px}
 .atabs button{flex:none;white-space:nowrap}
 .t-board{max-height:none}
 @media(max-width:700px){.t-layout,.t-staff-grid{grid-template-columns:1fr!important}.panel[data-panel=tasks] .t-stats{display:grid;grid-template-columns:1fr 1fr}}
+
+/* редактор аккаунта */
+.acc-dialog{border:0;border-radius:20px;padding:0;max-width:min(460px,94vw);width:100%;box-shadow:0 30px 80px rgba(0,16,107,.35)}
+.acc-dialog::backdrop{background:rgba(0,16,107,.45);backdrop-filter:blur(6px)}
+.acc-form{padding:24px;display:grid;gap:12px;max-height:88vh;overflow:auto}
+.acc-form h3{margin:0 0 4px}
+.acc-photo{display:flex;align-items:center;gap:14px}
+.acc-photo .s-avatar{width:64px;height:64px;font-size:1.3rem;flex:none}
+.acc-photo-btns{display:flex;flex-wrap:wrap;gap:8px}
+.acc-rights{border:1px solid #dfe6ee;border-radius:14px;padding:12px 14px;display:grid;gap:8px}
+.acc-rights legend{padding:0 6px;font-weight:700;font-size:.85rem}
+.acc-opt{display:flex;gap:8px;align-items:flex-start;font-size:.92rem;cursor:pointer}
+.acc-perms{display:grid;gap:6px;padding:8px 0 0 4px}
+.acc-hint{font-size:.78rem;color:#6b7480}
+.acc-perms[hidden],.acc-rights[hidden],#staffLevelField[hidden]{display:none}
