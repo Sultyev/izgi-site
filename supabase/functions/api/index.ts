@@ -47,6 +47,35 @@ const checkLogin = (l, list, self) => (!/^[a-z0-9._-]{3,24}$/.test(l) ? "Лог�
 const STATUS = ["new", "progress", "review", "done"];
 const COLORS = ["#01a09c", "#113fd2", "#0d2e7b", "#7fdcd3", "#00a79d"];
 
+/* ---------- push-уведомления ---------- */
+const b64raw = (u8) => btoa(String.fromCharCode(...u8)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+async function vapid() {
+  let v = await get("vapid", null);
+  if (!v) {
+    const kp = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+    const jwk = await crypto.subtle.exportKey("jwk", kp.privateKey);
+    v = { publicKey: b64raw(new Uint8Array(await crypto.subtle.exportKey("raw", kp.publicKey))), privateKey: jwk.d };
+    await put("vapid", v);
+  }
+  return v;
+}
+async function notify(userId, payload) {
+  try {
+    const all = await get("push", {});
+    const subs = all[userId] || [];
+    if (!subs.length) return;
+    const wp = (await import("npm:web-push@3.6.7")).default;
+    const v = await vapid();
+    wp.setVapidDetails(env("VAPID_SUBJECT") || "mailto:info@izgi.kg", v.publicKey, v.privateKey);
+    const dead = [];
+    await Promise.all(subs.map(async (sub) => {
+      try { await wp.sendNotification(sub, JSON.stringify(payload), { TTL: 86400, urgency: "high", timeout: 6000 }); }
+      catch (e) { if (e && (e.statusCode === 404 || e.statusCode === 410)) dead.push(sub.endpoint); }
+    }));
+    if (dead.length) { all[userId] = subs.filter((x) => !dead.includes(x.endpoint)); await put("push", all); }
+  } catch (_) { /* уведомления не должны ломать сохранение задач */ }
+}
+
 async function loadUsers() {
   let list = await get("users", null);
   if (!list) {
@@ -63,6 +92,7 @@ async function handle(req) {
   const path = url.pathname.replace(/^.*?\/api(?=\/|$)/, "") || "/";
   const m = req.method;
   if (path === "/content" && m === "GET") return json(await get("content", {}), 200, { "cache-control": "public, max-age=15" });
+  if (path === "/push/key" && m === "GET") return json({ key: (await vapid()).publicKey }, 200, { "cache-control": "public, max-age=300" });
   if (!env("AUTH_SECRET")) return json({ error: "Сервер не настроен: задайте секрет AUTH_SECRET." }, 500);
   const body = m === "GET" ? {} : await req.json().catch(() => ({}));
   const list = await loadUsers();
@@ -88,13 +118,37 @@ async function handle(req) {
   if (path === "/tasks" && m === "PUT") {
     const inc = Array.isArray(body.tasks) ? body.tasks : [];
     let all = await get("tasks", []);
-    if (dir) all = inc;
+    let fresh = [];
+    if (dir) {
+      const old = new Map(all.map((t) => [t.id, t]));
+      fresh = inc.filter((t) => t.assigneeId && t.assigneeId !== me.id && t.status !== "done" && (!old.has(t.id) || old.get(t.id).assigneeId !== t.assigneeId));
+      all = inc;
+    }
     else {
       const byId = new Map(inc.map((t) => [t.id, t]));
       all = all.map((t) => { const n = byId.get(t.id); return n && t.assigneeId === me.id && STATUS.includes(n.status) ? { ...t, status: n.status, startedAt: n.startedAt || null, completedAt: n.completedAt || null } : t; });
     }
     await put("tasks", all);
+    if (fresh.length) {
+      const job = Promise.all(fresh.map((t) => notify(t.assigneeId, { title: "Новая задача", body: String(t.title || "Задача") + (t.due ? " · срок: " + t.due : ""), url: "tasks.html", tag: "task-" + t.id })));
+      if (globalThis.EdgeRuntime && EdgeRuntime.waitUntil) EdgeRuntime.waitUntil(job); else await job;
+    }
     return json({ tasks: all.filter(mine) });
+  }
+  if (path === "/push/subscribe" && m === "POST") {
+    const sb = body.subscription || {};
+    if (!/^https:\/\//.test(sb.endpoint || "") || !sb.keys || !sb.keys.p256dh || !sb.keys.auth) return json({ ok: false, error: "Некорректная подписка." }, 400);
+    const all = await get("push", {});
+    for (const id of Object.keys(all)) all[id] = all[id].filter((x) => x.endpoint !== sb.endpoint);
+    all[me.id] = [...(all[me.id] || []), { endpoint: sb.endpoint, keys: { p256dh: sb.keys.p256dh, auth: sb.keys.auth } }].slice(-5);
+    await put("push", all);
+    return json({ ok: true });
+  }
+  if (path === "/push/unsubscribe" && m === "POST") {
+    const all = await get("push", {});
+    all[me.id] = (all[me.id] || []).filter((x) => x.endpoint !== body.endpoint);
+    await put("push", all);
+    return json({ ok: true });
   }
   if (path === "/avatars" && m === "PUT") {
     const id = String(body.id || "");

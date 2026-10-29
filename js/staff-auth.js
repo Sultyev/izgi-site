@@ -16,7 +16,10 @@
     S.boot();
     return r.data.user;
   }
-  function logout() { S.clear(); }
+  function logout() {
+    try { const ep = localStorage.getItem('izgi.push.endpoint'); if (ep && S.token()) S.req('POST', '/push/unsubscribe', { endpoint: ep }); localStorage.removeItem('izgi.push.endpoint'); } catch (e) { /* noop */ }
+    S.clear();
+  }
   function current() {
     const s = S.session();
     if (!s || !s.token || !s.exp || s.exp < Date.now()) { logout(); return null; }
@@ -26,7 +29,7 @@
   const can = (u, p) => isFull(u) || !!(u && u.perms && u.perms[p]);
   const isAdmin = (u) => !!u && (isFull(u) || ['tasks', 'staff', 'content'].some((p) => can(u, p)));
   const homeFor = (user) => (isAdmin(user) ? 'admin.html' : 'tasks.html');
-  const levelLabel = (u) => (u.role === 'director' ? 'Директор' : isFull(u) ? 'Полные права' : isAdmin(u) ? 'Расширенные права' : 'Сотрудник');
+  const levelLabel = (u) => (u.role === 'director' ? 'Директор' : isFull(u) ? 'Полный доступ' : isAdmin(u) ? 'Расширенные права' : 'Сотрудник');
   function requireRole(role) {
     const user = current();
     if (!user) {

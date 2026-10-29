@@ -358,7 +358,7 @@
       const editable = canEdit(user);
       const badge = user.role === 'director'
         ? '<span class="s-badge director">Директор</span>'
-        : auth.isFull(user) ? '<span class="s-badge director">Полные права</span>'
+        : auth.isFull(user) ? '<span class="s-badge director">Полный доступ</span>'
         : `<span class="s-badge role">${esc(permsText(user))}</span>`;
       const actions = (editable ? `<button class="btn sm" type="button" data-edit-id="${esc(user.id)}">Изменить</button>` : '')
         + (editable && user.role !== 'director' && user.id !== me.id ? `<button class="btn sm danger" type="button" data-remove-id="${esc(user.id)}">Удалить</button>` : '');
@@ -435,7 +435,7 @@
     <div class="s-field"><label for="accPass">Новый пароль</label><input class="inp" id="accPass" maxlength="64" placeholder="Оставьте пустым, чтобы не менять"></div>
     <fieldset class="acc-rights" id="accRights"><legend>Права доступа</legend>
       <label class="acc-opt"><input type="radio" name="accLevel" value="limited"> Ограниченные: только свои задачи и фото</label>
-      <label class="acc-opt"><input type="radio" name="accLevel" value="full"> Полные: все возможности директора</label>
+      <label class="acc-opt"><input type="radio" name="accLevel" value="full"> Полный доступ: все возможности директора</label>
       <div class="acc-perms" id="accPerms">
         <span class="acc-hint">Дополнительно к ограниченным:</span>
         <label class="acc-opt"><input type="checkbox" data-perm="tasks"> Задачи сотрудников</label>
