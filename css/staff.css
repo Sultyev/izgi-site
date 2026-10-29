@@ -887,3 +887,8 @@ button.t-stat:focus-visible{outline:3px solid #0057b8;outline-offset:2px}
 .tasks-head .push-chip{margin-top:8px}
 @media(max-width:600px){.push-chip{width:100%;text-align:center}}
 .ava-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99;max-width:90vw;padding:12px 20px;border-radius:14px;background:#00106b;color:#fff;font:600 .9rem Montserrat,sans-serif}
+
+.remember{display:flex;gap:8px;align-items:center;font-size:.88rem;color:#4a5b7a;margin:2px 0 8px;cursor:pointer}
+.remember input{width:18px;height:18px;accent-color:#01a09c}
+
+.push-help{display:block;margin-top:6px;padding:0;border:0;background:none;color:#0057b8;font:600 .78rem Montserrat,sans-serif;text-decoration:underline;cursor:pointer}

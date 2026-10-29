@@ -101,12 +101,14 @@ async function handle(req) {
   if (path === "/login" && m === "POST") {
     const u = list.find((x) => x.login === String(body.login || "").trim().toLowerCase());
     if (!u || !(await verify(String(body.password || ""), u.pass))) { await new Promise((r) => setTimeout(r, 700)); return json({ error: "Неверный логин или пароль." }, 401); }
-    return json({ token: await sign({ uid: u.id, v: u.tv || 0, exp: Date.now() + 8 * 3600e3 }), user: pub(u) });
+    const rm = body.remember !== false;
+    return json({ token: await sign({ uid: u.id, v: u.tv || 0, rm: rm ? 1 : 0, exp: Date.now() + (rm ? 30 * 864e5 : 12 * 3600e3) }), user: pub(u) });
   }
   const tok = await unsign((req.headers.get("authorization") || "").replace(/^Bearer /, ""));
   const me0 = tok && list.find((x) => x.id === tok.uid);
   const me = me0 && (tok.v || 0) === (me0.tv || 0) ? me0 : null;
   if (!me) return json({ error: "Нужно войти." }, 401);
+  if (path === "/refresh" && m === "POST") return json({ token: await sign({ uid: me.id, v: me.tv || 0, rm: tok.rm || 0, exp: Date.now() + (tok.rm ? 30 * 864e5 : 12 * 3600e3) }) });
   const dir = can(me, "tasks");
   const mine = (t) => dir || t.assigneeId === me.id;
 
@@ -203,7 +205,7 @@ async function handle(req) {
       }
       if (creds) u.tv = (u.tv || 0) + 1;
       await put("users", list);
-      const extra = creds && u.id === me.id ? { token: await sign({ uid: u.id, v: u.tv || 0, exp: tok.exp }) } : {};
+      const extra = creds && u.id === me.id ? { token: await sign({ uid: u.id, v: u.tv || 0, rm: tok.rm || 0, exp: tok.exp }) } : {};
       return json({ ok: true, user: pub(u), ...extra });
     }
     if (m === "PUT" && path.endsWith("/password")) {

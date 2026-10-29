@@ -13,7 +13,7 @@
   if($('#dirAvatar')){$('#dirAvatar').textContent=initials;$('#dirAvatar').dataset.uid=me.id;$('#dirAvatar').dataset.edit='1'}
   if($('#dirName'))$('#dirName').textContent=me.name;
   if($('#dirRole'))$('#dirRole').textContent=auth.levelLabel(me);
-  if($('#btnLogout'))$('#btnLogout').addEventListener('click',()=>{auth.logout();location.replace('staff.html')});
+  if($('#btnLogout'))$('#btnLogout').addEventListener('click',()=>{auth.logout(true);location.replace('index.html')});
   const DICT=(window.I18N&&window.I18N.dict)||{};
   const LANGS=['ru','kg','en'];
   const KEY='izgi.content.v1';

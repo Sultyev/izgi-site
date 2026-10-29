@@ -8,15 +8,18 @@
   const users = () => { try { return JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); } catch (e) { return []; } };
   const api = { lastError: '' };
 
-  function login(loginValue, passwordValue) {
+  function login(loginValue, passwordValue, remember) {
+    remember = remember !== false;
     api.lastError = '';
-    const r = S.req('POST', '/login', { login: loginValue, password: passwordValue });
+    const r = S.req('POST', '/login', { login: loginValue, password: passwordValue, remember });
     if (r.status !== 200) { api.lastError = r.data.error || ''; return null; }
-    S.setSession({ token: r.data.token, user: r.data.user, exp: Date.now() + 8 * 3600e3 });
+    S.setSession({ token: r.data.token, user: r.data.user, persist: remember, exp: Date.now() + (remember ? 30 * 864e5 : 12 * 3600e3) });
+    try { localStorage.setItem('izgi.staff.seen', '1'); } catch (e) { /* noop */ }
     S.boot();
     return r.data.user;
   }
-  function logout() {
+  function logout(explicit) {
+    if (explicit) { try { localStorage.removeItem('izgi.staff.seen'); } catch (e) { /* noop */ } }
     try { const ep = localStorage.getItem('izgi.push.endpoint'); if (ep && S.token()) S.req('POST', '/push/unsubscribe', { endpoint: ep }); localStorage.removeItem('izgi.push.endpoint'); } catch (e) { /* noop */ }
     S.clear();
   }
@@ -34,7 +37,8 @@
     const user = current();
     if (!user) {
       const page = (location.pathname.split('/').pop() || 'index.html') + (location.hash || '');
-      location.replace('staff.html?next=' + encodeURIComponent(page));
+      let seen = false; try { seen = !!localStorage.getItem('izgi.staff.seen'); } catch (e) { /* noop */ }
+      location.replace(seen ? 'staff.html?next=' + encodeURIComponent(page) : 'index.html');
       return null;
     }
     if ((role === 'director' && !isAdmin(user)) || (role === 'employee' && user.role === 'director')) {

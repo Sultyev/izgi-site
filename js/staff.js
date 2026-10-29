@@ -64,7 +64,7 @@
       ? 'Вы вошли как директор: доступны задачи всей команды и управление сотрудниками.'
       : 'Вы вошли как сотрудник: здесь только ваши задачи и сроки.';
     $('#sessLogout').onclick = () => {
-      auth.logout();
+      auth.logout(true);
       loginInput.value = '';
       passwordInput.value = '';
       showForm();
@@ -99,7 +99,7 @@
       return;
     }
 
-    const user = auth.login(loginValue, passwordValue);
+    const user = auth.login(loginValue, passwordValue, !$('#rememberMe') || $('#rememberMe').checked);
     if (!user) {
       errorBox.textContent = auth.lastError || 'Неверный логин или пароль. Проверьте раскладку и попробуйте снова.';
       loginInput.setAttribute('aria-invalid', 'true');

@@ -8,8 +8,14 @@ self.addEventListener('push', (e) => {
   e.waitUntil(self.registration.showNotification(d.title || 'ИЗГИ', {
     body: d.body || '',
     icon: 'assets/icon-192.png',
-    badge: 'assets/icon-192.png',
+    badge: 'assets/badge-96.png',
     tag: d.tag || 'izgi',
+    renotify: true,
+    requireInteraction: true,
+    silent: false,
+    vibrate: [250, 120, 250, 120, 400],
+    timestamp: Date.now(),
+    actions: [{ action: 'open', title: 'Открыть' }],
     data: { url: d.url || 'tasks.html' }
   }));
 });

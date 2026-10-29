@@ -248,8 +248,8 @@
   });
 
   $('#btnLogout').addEventListener('click', () => {
-    auth.logout();
-    location.replace('staff.html');
+    auth.logout(true);
+    location.replace('index.html');
   });
 
   window.addEventListener('taskschange', renderAll);

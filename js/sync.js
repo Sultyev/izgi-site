@@ -5,7 +5,8 @@
   const SK = 'izgi.session.v2';
   const K = { users: 'izgi.staff.users.v1', tasks: 'izgi.tasks.v1', av: 'izgi.avatars.v1', content: 'izgi.content.v1' };
   const raw = Storage.prototype.setItem;
-  const sess = () => { try { return JSON.parse(sessionStorage.getItem(SK) || 'null'); } catch (e) { return null; } };
+  const sess = () => { try { return JSON.parse(localStorage.getItem(SK) || sessionStorage.getItem(SK) || 'null'); } catch (e) { return null; } };
+  const keep = (o) => { try { localStorage.removeItem(SK); sessionStorage.removeItem(SK); (o.persist ? localStorage : sessionStorage).setItem(SK, JSON.stringify(o)); } catch (e) { /* noop */ } };
   const token = () => (sess() || {}).token || '';
   const meNow = () => { const s = sess(); if (!s) return null; try { return JSON.parse(localStorage.getItem(K.users) || '[]').find((u) => u.id === s.user.id) || s.user; } catch (e) { return s.user; } };
   const canContent = () => { const u = meNow(); return !!u && (u.role === 'director' || u.level === 'full' || !!(u.perms && u.perms.content)); };
@@ -31,7 +32,7 @@
     return { status: x.status, data };
   }
   function clear() {
-    try { sessionStorage.removeItem(SK); Object.values(K).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* noop */ }
+    try { sessionStorage.removeItem(SK); localStorage.removeItem(SK); Object.values(K).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* noop */ }
   }
   function apply(st, notify) {
     const set = (k, v) => {
@@ -84,6 +85,13 @@
       .then((st) => { if (st && st.tasks && !pending) apply(st, true); }).catch(() => {});
   }, 15000);
 
-  window.IzgiSync = { req, boot, clear, token, SK, session: sess, setSession: (o) => sessionStorage.setItem(SK, JSON.stringify(o)) };
+  window.IzgiSync = { req, boot, clear, token, SK, session: sess, setSession: keep };
+  function renew() {
+    const s = sess();
+    if (!s || !s.persist || s.exp - Date.now() > 15 * 864e5) return;
+    const r = req('POST', '/refresh');
+    if (r.status === 200) { s.token = r.data.token; s.exp = Date.now() + 30 * 864e5; keep(s); }
+  }
+  renew();
   boot();
 })();
