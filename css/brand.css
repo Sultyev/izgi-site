@@ -146,3 +146,15 @@ nav a{padding:14px 16px;font-size:1rem;text-align:left;border-radius:14px}
 .stats a.stat{display:block;color:inherit;text-decoration:none;transition:transform .25s,box-shadow .25s}
 .stats a.stat:hover{transform:translateY(-3px)}
 .stats a.stat:focus-visible{outline:3px solid var(--blue);outline-offset:3px;border-radius:14px}
+
+/* кружки по направлениям */
+.clubs-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin-top:20px}
+.club-group{background:var(--gl,rgba(255,255,255,.6));-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--gl-edge,rgba(255,255,255,.8));border-top:4px solid var(--c,#01a09c);border-radius:18px;padding:20px 22px;box-shadow:0 10px 32px rgba(0,16,107,.08)}
+.club-group h3{display:flex;align-items:center;gap:10px;margin:0 0 12px;font-size:1.05rem;color:var(--blue-d,#00106b);text-wrap:balance}
+.club-group .emoji{font-size:1.4rem}
+.club-group ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.club-group li{display:grid;gap:2px;padding-bottom:10px;border-bottom:1px solid rgba(0,16,107,.08)}
+.club-group li:last-child{border:0;padding-bottom:0}
+.club-group li strong{font-size:.95rem;line-height:1.35}
+.club-group li span{font-size:.84rem;color:#5a6068}
+#newsNone{text-align:center;padding:32px 20px}

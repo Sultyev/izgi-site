@@ -151,7 +151,11 @@ const curLang=()=>window.I18N&&window.I18N.lang||'ru';
 const val=o=>{if(o==null)return '';if(typeof o==='string')return o;return o[curLang()]||o.ru||o.kg||o.en||''};
 function renderNews(){
   const grid=document.querySelector('.grid.news');
-  if(!grid||!DATA.news||!DATA.news.length)return;
+  if(!grid)return;
+  const none=!(DATA.news&&DATA.news.length);
+  const nn=document.getElementById('newsNone');if(nn)nn.hidden=!none;
+  const fl=document.querySelector('.filters');if(fl)fl.hidden=none;
+  if(none)return;
   $$('.news-extra',grid).forEach(n=>n.remove());
   DATA.news.forEach(item=>{
     const art=document.createElement('article');

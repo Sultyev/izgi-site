@@ -16,29 +16,9 @@
     <button class="chip" data-f="notice" aria-pressed="false" data-i18n="filter.notice">Объявления</button>
   </div>
   <h2 class="sr-only" data-i18n="news.h2">Новости школы</h2>
-  <div class="grid news">
-    <article class="card glass" data-cat="event" data-icon="🎉" style="--c:#01a09c">
-      <time data-i18n="news1.date" data-i18n-hide-ph>[дата]</time>
-      <h3 data-i18n="news1.h3">День открытых дверей</h3>
-      <p data-i18n="news1.p">Приглашаем семьи будущих первоклассников познакомиться со школой.</p>
-    </article>
-    <article class="card glass" data-cat="notice" data-icon="📅" style="--c:#113fd2">
-      <time data-i18n="news2.date" data-i18n-hide-ph>[дата]</time>
-      <h3 data-i18n="news2.h3">Начало учебного года</h3>
-      <p data-i18n="news2.p">Расписание первого дня и информация для родителей.</p>
-    </article>
-    <article class="card glass" data-cat="event" data-icon="🏆" style="--c:#081a58">
-      <time data-i18n="news3.date" data-i18n-hide-ph>[дата]</time>
-      <h3 data-i18n="news3.h3">Школьная олимпиада</h3>
-      <p data-i18n="news3.p">Ученики 1–4 классов проверят свои силы в предметных турнирах.</p>
-    </article>
-    <article class="card glass" data-cat="notice" data-icon="📝" style="--c:#7fdcd3">
-      <time data-i18n="news4.date" data-i18n-hide-ph>[дата]</time>
-      <h3 data-i18n="news4.h3">Приём заявок на новый год</h3>
-      <p data-i18n="news4.p">Открыта запись в 1 класс и на свободные места в других классах.</p>
-    </article>
-  </div>
-  <p class="empty glass" hidden role="status" data-i18n="news.empty">По этому фильтру новостей пока нет.</p>
+  <div class="grid news"></div>
+    <p class="empty glass" id="newsNone" hidden role="status" data-i18n="news.none">Пока новостей нет. Загляните позже: здесь появятся события и объявления школы.</p>
+    <p class="empty glass" hidden role="status" data-i18n="news.empty">По этому фильтру новостей пока нет.</p>
 </section>
 <section class="wrap">
 <div class="cta glass">
