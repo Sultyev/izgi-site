@@ -88,9 +88,9 @@
   window.IzgiSync = { req, boot, clear, token, SK, session: sess, setSession: keep };
   function renew() {
     const s = sess();
-    if (!s || !s.persist || s.exp - Date.now() > 15 * 864e5) return;
+    if (!s || !s.persist || Date.now() - (s.at || 0) < 6 * 36e5) return;
     const r = req('POST', '/refresh');
-    if (r.status === 200) { s.token = r.data.token; s.exp = Date.now() + 30 * 864e5; keep(s); }
+    if (r.status === 200) { s.token = r.data.token; s.exp = r.data.exp || Date.now() + 30 * 864e5; s.at = Date.now(); keep(s); }
   }
   renew();
   boot();

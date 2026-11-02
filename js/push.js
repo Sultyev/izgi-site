@@ -50,7 +50,7 @@
     }
     if (Notification.permission === 'denied') return set('Уведомления заблокированы в настройках браузера', 'push-off');
     const sub = await current();
-    if (Notification.permission === 'granted' && sub) { link(sub); return set('Уведомления включены · выключить', 'push-on', () => { if (confirm('Выключить уведомления на этом устройстве?')) disable(); }); }
+    if (Notification.permission === 'granted' && sub) { const st = S.req('POST', '/push/status', { endpoint: sub.endpoint }); if (st.status === 200 && !st.data.registered) link(sub); return set('Уведомления включены · выключить', 'push-on', () => { if (confirm('Выключить уведомления на этом устройстве?')) disable(); }); }
     set('Включить уведомления о задачах', 'push-ask', enable);
   }
   refresh();
@@ -58,4 +58,19 @@
   help.type = 'button'; help.className = 'push-help'; help.textContent = 'Уведомления приходят без всплывающего окна?';
   help.onclick = () => alert('Чтобы уведомление всплывало сверху, как в WhatsApp:\n\nAndroid (самый быстрый способ):\n1. Дождитесь уведомления и нажмите на него и удерживайте палец.\n2. Нажмите «Настройки» (или значок шестерёнки).\n3. Выберите категорию уведомлений этого сайта.\n4. Поставьте важность «Срочно» (или «Звук и всплывающее окно») и включите «Показывать на экране».\n\nЕсли не получилось: Настройки → Приложения → Chrome → Уведомления → категория сайта → «Срочно». На Xiaomi дополнительно включите «Плавающие уведомления», на Samsung режим «Всплывающее окно».\n\niPhone: Настройки → Уведомления → ИЗГИ → Баннеры (стиль «Временные» или «Постоянные») и Звуки.\n\nПроверьте также режимы «Не беспокоить» и «Фокусирование».');
   host.appendChild(help);
+  const test = document.createElement('button');
+  test.type = 'button'; test.className = 'push-help'; test.textContent = 'Проверить уведомления';
+  test.onclick = async () => {
+    if (!supported) return toast('Этот браузер не поддерживает уведомления.');
+    const sub = await current();
+    if (!sub) return toast('На этом устройстве уведомления выключены. Нажмите «Включить уведомления о задачах».');
+    await link(sub);
+    const r = S.req('POST', '/push/test');
+    const d = r.data || {};
+    if (r.status === 401) return toast('Сессия истекла. Войдите заново.');
+    if (r.status === 200 && d.sent > 0) return toast('Тест отправлен. Через несколько секунд на экране должно появиться уведомление.');
+    if (d.dead) { try { await sub.unsubscribe(); } catch (e) { /* noop */ } localStorage.removeItem(EP); toast('Подписка устарела и удалена. Нажмите «Включить уведомления о задачах» ещё раз.'); return refresh(); }
+    toast(d.error || ('Не удалось отправить: ' + JSON.stringify(d.failed || d).slice(0, 160)));
+  };
+  host.appendChild(test);
 })();

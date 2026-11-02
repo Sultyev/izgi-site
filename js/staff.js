@@ -49,6 +49,7 @@
   }
 
   function showSession(user) {
+    if (!/[?&]stay=1/.test(location.search)) { location.replace(destinationFor(user)); return; }
     formBox.hidden = true;
     sessionBox.hidden = false;
     $('#sessAvatar').textContent = initials(user.name); $('#sessAvatar').dataset.uid = user.id;

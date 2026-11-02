@@ -892,3 +892,5 @@ button.t-stat:focus-visible{outline:3px solid #0057b8;outline-offset:2px}
 .remember input{width:18px;height:18px;accent-color:#01a09c}
 
 .push-help{display:block;margin-top:6px;padding:0;border:0;background:none;color:#0057b8;font:600 .78rem Montserrat,sans-serif;text-decoration:underline;cursor:pointer}
+
+.push-help + .push-help{margin-top:2px}

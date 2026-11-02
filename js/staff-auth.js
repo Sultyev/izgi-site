@@ -13,7 +13,7 @@
     api.lastError = '';
     const r = S.req('POST', '/login', { login: loginValue, password: passwordValue, remember });
     if (r.status !== 200) { api.lastError = r.data.error || ''; return null; }
-    S.setSession({ token: r.data.token, user: r.data.user, persist: remember, exp: Date.now() + (remember ? 30 * 864e5 : 12 * 3600e3) });
+    S.setSession({ token: r.data.token, user: r.data.user, persist: remember, at: Date.now(), exp: r.data.exp || Date.now() + (remember ? 30 * 864e5 : 12 * 3600e3) });
     try { localStorage.setItem('izgi.staff.seen', '1'); } catch (e) { /* noop */ }
     S.boot();
     return r.data.user;

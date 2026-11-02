@@ -4,7 +4,7 @@
   "description": "Частный учебно-воспитательный комплекс: начальная школа 1–4 классы, расписание, команда, новости и контакты.",
   "lang": "ru",
   "dir": "ltr",
-  "start_url": "./index.html",
+  "start_url": "./go.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",

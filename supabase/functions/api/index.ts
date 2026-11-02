@@ -102,13 +102,17 @@ async function handle(req) {
     const u = list.find((x) => x.login === String(body.login || "").trim().toLowerCase());
     if (!u || !(await verify(String(body.password || ""), u.pass))) { await new Promise((r) => setTimeout(r, 700)); return json({ error: "Неверный логин или пароль." }, 401); }
     const rm = body.remember !== false;
-    return json({ token: await sign({ uid: u.id, v: u.tv || 0, rm: rm ? 1 : 0, exp: Date.now() + (rm ? 30 * 864e5 : 12 * 3600e3) }), user: pub(u) });
+    const exp = Date.now() + (rm ? 30 * 864e5 : 12 * 3600e3);
+    return json({ token: await sign({ uid: u.id, v: u.tv || 0, rm: rm ? 1 : 0, exp }), exp, user: pub(u) });
   }
   const tok = await unsign((req.headers.get("authorization") || "").replace(/^Bearer /, ""));
   const me0 = tok && list.find((x) => x.id === tok.uid);
   const me = me0 && (tok.v || 0) === (me0.tv || 0) ? me0 : null;
   if (!me) return json({ error: "Нужно войти." }, 401);
-  if (path === "/refresh" && m === "POST") return json({ token: await sign({ uid: me.id, v: me.tv || 0, rm: tok.rm || 0, exp: Date.now() + (tok.rm ? 30 * 864e5 : 12 * 3600e3) }) });
+  if (path === "/refresh" && m === "POST") {
+    const exp = Date.now() + (tok.rm ? 30 * 864e5 : 12 * 3600e3);
+    return json({ token: await sign({ uid: me.id, v: me.tv || 0, rm: tok.rm || 0, exp }), exp });
+  }
   const dir = can(me, "tasks");
   const mine = (t) => dir || t.assigneeId === me.id;
 
@@ -145,6 +149,26 @@ async function handle(req) {
     all[me.id] = [...(all[me.id] || []), { endpoint: sb.endpoint, keys: { p256dh: sb.keys.p256dh, auth: sb.keys.auth } }].slice(-5);
     await put("push", all);
     return json({ ok: true });
+  }
+  if (path === "/push/status" && m === "POST") {
+    const mySubs = (await get("push", {}))[me.id] || [];
+    return json({ registered: mySubs.some((x) => x.endpoint === body.endpoint), count: mySubs.length });
+  }
+  if (path === "/push/test" && m === "POST") {
+    const all = await get("push", {});
+    const subs = all[me.id] || [];
+    if (!subs.length) return json({ ok: false, count: 0, error: "На сервере нет подписанных устройств. Нажмите «Включить уведомления»." });
+    let wp;
+    try { wp = (await import("npm:web-push@3.6.7")).default; } catch (e) { return json({ ok: false, count: subs.length, error: "Не удалось загрузить библиотеку отправки: " + String(e).slice(0, 120) }); }
+    const v = await vapid();
+    wp.setVapidDetails(env("VAPID_SUBJECT") || "mailto:info@izgi.kg", v.publicKey, v.privateKey);
+    const res = [], dead = [];
+    await Promise.all(subs.map(async (sub) => {
+      try { await wp.sendNotification(sub, JSON.stringify({ title: "Проверка уведомлений", body: "Если вы видите это сообщение, уведомления работают.", url: "tasks.html", tag: "test" }), { TTL: 600, urgency: "high", timeout: 6000 }); res.push({ ok: true }); }
+      catch (e) { const code = (e && e.statusCode) || 0; if (code === 404 || code === 410) dead.push(sub.endpoint); res.push({ ok: false, status: code, msg: String((e && (e.body || e.message)) || e).slice(0, 160) }); }
+    }));
+    if (dead.length) { all[me.id] = subs.filter((x) => !dead.includes(x.endpoint)); await put("push", all); }
+    return json({ ok: res.some((r) => r.ok), count: subs.length, sent: res.filter((r) => r.ok).length, dead: dead.length, failed: res.filter((r) => !r.ok) });
   }
   if (path === "/push/unsubscribe" && m === "POST") {
     const all = await get("push", {});
