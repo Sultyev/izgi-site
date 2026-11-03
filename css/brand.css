@@ -166,3 +166,20 @@ nav a{padding:14px 16px;font-size:1rem;text-align:left;border-radius:14px}
 .fb-qr img{width:190px;height:190px;display:block}
 .fb-scan{font-weight:700;color:#01a09c}
 @media(max-width:640px){.fb-card{grid-template-columns:1fr;justify-items:center;text-align:center;padding:24px 18px}.fb-qr img{width:min(220px,64vw);height:auto}}
+
+/* аватар и ник вошедшего сотрудника на публичных страницах */
+.me{position:relative;order:1;margin-left:6px}
+.me-chip{display:flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;border-radius:999px;border:1px solid var(--gl-edge,#fff);background:var(--gl,rgba(255,255,255,.6));-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font:600 .85rem Montserrat,sans-serif;color:var(--blue-d,#00106b);cursor:pointer}
+.me-ava{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:.75rem;background:linear-gradient(135deg,#01a09c,#113fd2);flex:none}
+.me-ava.has-photo{color:transparent}
+.me-nick{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me-menu{position:absolute;right:0;top:calc(100% + 10px);min-width:240px;padding:10px;border-radius:18px;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border:1px solid var(--gl-edge,#fff);box-shadow:0 18px 50px rgba(0,16,107,.22);display:grid;gap:2px;z-index:30}
+.me-menu[hidden]{display:none}
+.me-head{display:grid;gap:2px;padding:8px 10px 10px;margin-bottom:4px;border-bottom:1px solid rgba(0,16,107,.1)}
+.me-head strong{font-size:.95rem}
+.me-head span{font-size:.8rem;color:#5a6068}
+.me-head em{font-style:normal;font-size:.72rem;font-weight:700;color:#01a09c}
+.me-menu a,.me-menu button{padding:10px;border-radius:10px;text-align:left;text-decoration:none;color:var(--ink,#333);font:600 .9rem Montserrat,sans-serif;background:none;border:0;cursor:pointer}
+.me-menu a:hover,.me-menu button:hover{background:rgba(1,160,156,.12)}
+@media(max-width:1180px){.burger{order:2}}
+@media(max-width:520px){.me-nick{display:none}.me-chip{padding:3px}.me{margin-left:2px}}

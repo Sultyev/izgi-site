@@ -31,7 +31,7 @@
   const isFull = (u) => !!u && (u.role === 'director' || u.level === 'full');
   const can = (u, p) => isFull(u) || !!(u && u.perms && u.perms[p]);
   const isAdmin = (u) => !!u && (isFull(u) || ['tasks', 'staff', 'content'].some((p) => can(u, p)));
-  const homeFor = (user) => (isAdmin(user) ? 'admin.html' : 'tasks.html');
+  const homeFor = (user) => (user && user.role === 'director' ? 'admin.html' : 'tasks.html');
   const levelLabel = (u) => (u.role === 'director' ? 'Директор' : isFull(u) ? 'Полный доступ' : isAdmin(u) ? 'Расширенные права' : 'Сотрудник');
   function requireRole(role) {
     const user = current();
