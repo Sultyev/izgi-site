@@ -183,3 +183,9 @@ nav a{padding:14px 16px;font-size:1rem;text-align:left;border-radius:14px}
 .me-menu a:hover,.me-menu button:hover{background:rgba(1,160,156,.12)}
 @media(max-width:1180px){.burger{order:2}}
 @media(max-width:520px){.me-nick{display:none}.me-chip{padding:3px}.me{margin-left:2px}}
+
+/* шапка на телефоне при входе: бургер всегда на месте */
+.burger{flex:none}
+.topright{min-width:0}
+.me-menu .langs.in-menu{display:flex;gap:6px;padding:8px 10px 10px;margin:0 0 4px;border-bottom:1px solid rgba(0,16,107,.1)}
+.me-menu .langs.in-menu .lang{flex:1}
