@@ -189,3 +189,37 @@ nav a{padding:14px 16px;font-size:1rem;text-align:left;border-radius:14px}
 .topright{min-width:0}
 .me-menu .langs.in-menu{display:flex;gap:6px;padding:8px 10px 10px;margin:0 0 4px;border-bottom:1px solid rgba(0,16,107,.1)}
 .me-menu .langs.in-menu .lang{flex:1}
+
+/* шапка на узком телефоне: всё должно помещаться, бургер не вытесняется ни при каких условиях */
+@media(max-width:520px){
+  .top{padding:8px 8px 8px 12px;gap:4px}
+  .brand{gap:6px;min-width:0}
+  .brand .mark{height:30px}
+  .brand .bt{font-size:1.2rem}
+  .topright{gap:4px;flex-wrap:nowrap;margin-left:auto}
+  .langs{gap:2px}
+  .lang{padding:5px 7px;font-size:.66rem;min-width:0}
+  .burger{width:40px;height:40px;flex:none}
+  .me-ava{width:28px;height:28px}
+  .me-chip{padding:3px}
+}
+@media(max-width:360px){.brand .bt{font-size:1.05rem}.lang{padding:5px 6px;font-size:.62rem}}
+
+/* ===== выдвижная панель меню (телефон/планшет) ===== */
+@media(max-width:1180px){
+body>nav#nav{display:flex!important;position:fixed;top:0;right:0;bottom:0;left:auto;width:min(86vw,340px);flex-direction:column;gap:4px;padding:16px 16px calc(24px + env(safe-area-inset-bottom));border-radius:24px 0 0 24px;background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(24px) saturate(170%);backdrop-filter:blur(24px) saturate(170%);border:1px solid var(--gl-edge,#fff);box-shadow:-20px 0 60px rgba(0,16,107,.25);transform:translateX(110%);visibility:hidden;transition:transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s .32s;z-index:60;overflow-y:auto}
+body>nav#nav.open{transform:none;visibility:visible;transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+.nav-head{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 12px;margin-bottom:6px;border-bottom:1px solid rgba(0,16,107,.1)}
+.nav-title{font-weight:800;font-size:1.3rem;color:#01a09c}
+.nav-close{width:44px;height:44px;border-radius:14px;border:1px solid var(--gl-edge,#fff);background:var(--gl,rgba(255,255,255,.6));font-size:1.7rem;line-height:1;cursor:pointer;color:var(--blue-d,#00106b)}
+body>nav#nav a{padding:14px 16px;font-size:1rem;text-align:left;border-radius:14px}
+.nav-langs{margin-top:auto;padding-top:14px;border-top:1px solid rgba(0,16,107,.1)}
+.nav-langs::before{content:attr(data-label);display:block;margin:0 4px 8px;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#5a6068}
+.nav-langs .langs{display:flex;gap:6px}
+.nav-langs .lang{flex:1;justify-content:center}
+.nav-overlay{position:fixed;inset:0;z-index:50;background:rgba(0,16,107,.35);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .3s}
+body.nav-open .nav-overlay{opacity:1;pointer-events:auto}
+body.nav-open{overflow:hidden}
+}
+@media(min-width:1181px){.nav-overlay,.nav-head,.nav-langs{display:none}}
+@media(prefers-reduced-motion:reduce){body>nav#nav,.nav-overlay{transition:none!important}}

@@ -56,18 +56,6 @@
   box.append(chip, menu);
   top.appendChild(box);
 
-  /* на узких экранах переключатель языков переезжает в меню профиля, чтобы шапка не ломалась */
-  const langs = top.querySelector('.langs');
-  if (langs) {
-    const mq = window.matchMedia('(max-width:520px)');
-    const place = () => {
-      if (mq.matches) { langs.classList.add('in-menu'); menu.insertBefore(langs, head.nextSibling); }
-      else { langs.classList.remove('in-menu'); top.insertBefore(langs, top.firstChild); }
-    };
-    place();
-    if (mq.addEventListener) mq.addEventListener('change', place); else mq.addListener(place);
-  }
-
   function labels() {
     lvl.textContent = u.role === 'director' ? L('dir') : full ? L('full') : admin ? L('ext') : L('staff');
     aTasks.textContent = L('tasks'); aPanel.textContent = L('panel'); out.textContent = L('out');
