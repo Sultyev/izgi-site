@@ -160,3 +160,24 @@ button.t-stat:focus-visible{outline:3px solid #0057b8;outline-offset:2px}
 .acc-perms{display:grid;gap:6px;padding:8px 0 0 4px}
 .acc-hint{font-size:.78rem;color:#6b7480}
 .acc-perms[hidden],.acc-rights[hidden],#staffLevelField[hidden]{display:none}
+
+/* заявки */
+.tabcount{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;margin-left:6px;border-radius:999px;background:#e5484d;color:#fff;font-size:.72rem;font-weight:700;line-height:1}
+.tabcount[hidden]{display:none}
+.req-filters{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 16px}
+.req-filters .chip{font:600 .85rem Montserrat,sans-serif;padding:8px 14px;border-radius:999px;border:1px solid #dfe6ee;background:#fff;color:#00106b;cursor:pointer}
+.req-filters .chip.on{background:linear-gradient(135deg,#01a09c,#113fd2);color:#fff;border-color:transparent}
+.req-filters .n{opacity:.7;margin-left:4px}
+.req-list{display:grid;gap:12px}
+.req{padding:16px 18px;border:1px solid #e3e8ee;border-left:5px solid #f0a020;border-radius:14px;background:#fff;display:grid;gap:10px}
+.req-accepted{border-left-color:#16a34a}.req-rejected{border-left-color:#e5484d}
+.req-top{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.req-badge{padding:4px 10px;border-radius:999px;font-size:.75rem;font-weight:700;background:#fff4d6;color:#8a5a00}
+.req-badge.accepted{background:#dcf5e4;color:#126b32}.req-badge.rejected{background:#fde4e4;color:#a11a1f}
+.req-meta{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.9rem;color:#4a5b7a}
+.req-meta a{font-weight:700;color:#00106b}
+.req-by{font-size:.8rem;color:#6b7480}
+.req-note{width:100%;padding:10px 12px;border:1px solid #dfe6ee;border-radius:10px;font:inherit;font-size:.9rem;resize:vertical}
+.req-actions{display:flex;flex-wrap:wrap;gap:8px}
+.req-actions .btn.on{box-shadow:0 0 0 2px #00106b inset}
+.req-ok{background:#16a34a;color:#fff;border:0}.req-no{background:#e5484d;color:#fff;border:0}

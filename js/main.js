@@ -97,12 +97,18 @@ if(form){
       return;
     }
     const rec=collect();
-    saveRequest(rec);
-    if(mailLink)mailLink.href=mailHref(rec);
-    if(done)done.hidden=false;
-    form.reset();
-    const el=document.createElement('div');el.className='toast';el.textContent=tr('form.success');
-    document.body.append(el);setTimeout(()=>el.remove(),3500);
+    const btn=form.querySelector('button[type=submit]');if(btn)btn.disabled=true;
+    const toast=t=>{const el=document.createElement('div');el.className='toast';el.textContent=t;document.body.append(el);setTimeout(()=>el.remove(),4200)};
+    const fallback=()=>{saveRequest(rec);if(mailLink)mailLink.href=mailHref(rec);if(done)done.hidden=false;toast(tr('form.fail'))};
+    fetch((window.IZGI_API||'/api')+'/requests',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:rec.name,phone:rec.phone,grade:rec.grade,lang:rec.lang,website:(form.website&&form.website.value)||''})})
+      .then(r=>r.json().catch(()=>({})).then(d=>({r,d})))
+      .then(({r,d})=>{
+        if(r.ok&&d.ok){form.reset();if(done)done.hidden=true;toast(tr('form.success'))}
+        else if(r.status>=400&&r.status<500&&d.error)toast(d.error);
+        else fallback();
+      })
+      .catch(fallback)
+      .finally(()=>{if(btn)btn.disabled=false});
   });
   window.addEventListener('langchange',()=>{
     if(nameIn&&nameIn.getAttribute('aria-invalid')==='true')setErr(nameIn,errName,'form.err.name');

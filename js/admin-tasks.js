@@ -420,7 +420,7 @@
   function canRights(user) { return auth.isFull(me) && !owner(user) && user.id !== me.id; }
   function permsText(user) {
     const p = user.perms || {};
-    const t = [p.tasks && 'Задачи', p.staff && 'Аккаунты', p.content && 'Контент сайта'].filter(Boolean);
+    const t = [p.tasks && 'Задачи', p.staff && 'Аккаунты', p.content && 'Контент сайта', p.requests && 'Заявки'].filter(Boolean);
     return t.length ? t.join(' · ') : 'Сотрудник';
   }
 
@@ -441,6 +441,7 @@
         <label class="acc-opt"><input type="checkbox" data-perm="tasks"> Задачи сотрудников</label>
         <label class="acc-opt"><input type="checkbox" data-perm="staff"> Аккаунты сотрудников</label>
         <label class="acc-opt"><input type="checkbox" data-perm="content"> Контент сайта</label>
+        <label class="acc-opt"><input type="checkbox" data-perm="requests"> Заявки на экскурсию</label>
       </div>
     </fieldset>
     <p class="s-error" id="accError" role="alert"></p>

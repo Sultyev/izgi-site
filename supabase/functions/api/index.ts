@@ -98,6 +98,26 @@ async function handle(req) {
   const list = await loadUsers();
   if (!list.length) return json({ error: "Сервер не настроен: задайте секреты DIRECTOR_LOGIN и DIRECTOR_PASSWORD." }, 500);
 
+  if (path === "/requests" && m === "POST") {
+    if (body.website) return json({ ok: true });
+    const name = String(body.name || "").trim().slice(0, 80), phone = String(body.phone || "").trim().slice(0, 30);
+    const grade = String(body.grade || "").trim().slice(0, 20), lang = String(body.lang || "").slice(0, 5);
+    if (name.length < 2) return json({ ok: false, error: "Укажите имя." }, 400);
+    if (!/^[+\d][\d\s()\-]{6,24}$/.test(phone) || phone.replace(/\D/g, "").length < 9) return json({ ok: false, error: "Проверьте номер телефона." }, 400);
+    const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "?", now = Date.now();
+    const rl = await get("rl", {});
+    for (const k of Object.keys(rl)) { rl[k] = rl[k].filter((t) => now - t < 3600e3); if (!rl[k].length) delete rl[k]; }
+    if ((rl[ip] || []).length >= 5) return json({ ok: false, error: "Слишком много заявок с вашего адреса. Позвоните нам или попробуйте позже." }, 429);
+    rl[ip] = [...(rl[ip] || []), now];
+    await put("rl", rl);
+    const reqs = await get("requests", []);
+    const item = { id: "r-" + now.toString(36) + rand(), createdAt: now, name, phone, grade, lang, status: "pending", note: "", handledBy: "", handledAt: 0 };
+    reqs.unshift(item);
+    await put("requests", reqs.slice(0, 2000));
+    const job = Promise.all(list.filter((u) => can(u, "requests")).map((u) => notify(u.id, { title: "Новая заявка", body: name + (grade ? " · " + grade + " класс" : ""), url: "admin.html#requests", tag: "req-" + item.id })));
+    if (globalThis.EdgeRuntime && EdgeRuntime.waitUntil) EdgeRuntime.waitUntil(job); else await job;
+    return json({ ok: true });
+  }
   if (path === "/login" && m === "POST") {
     const u = list.find((x) => x.login === String(body.login || "").trim().toLowerCase());
     if (!u || !(await verify(String(body.password || ""), u.pass))) { await new Promise((r) => setTimeout(r, 700)); return json({ error: "Неверный логин или пароль." }, 401); }
@@ -140,6 +160,31 @@ async function handle(req) {
       if (globalThis.EdgeRuntime && EdgeRuntime.waitUntil) EdgeRuntime.waitUntil(job); else await job;
     }
     return json({ tasks: all.filter(mine) });
+  }
+  if (path === "/requests" && m === "GET") {
+    if (!can(me, "requests")) return json({ error: "Нет доступа." }, 403);
+    return json({ requests: await get("requests", []) });
+  }
+  if (path.startsWith("/requests/") && (m === "PUT" || m === "DELETE")) {
+    if (!can(me, "requests")) return json({ error: "Нет доступа." }, 403);
+    const rid = path.split("/")[2];
+    const reqs = await get("requests", []);
+    const r = reqs.find((x) => x.id === rid);
+    if (!r) return json({ error: "Заявка не найдена." }, 404);
+    if (m === "DELETE") {
+      if (!full(me)) return json({ error: "Удалять заявки может только директор или сотрудник с полным доступом." }, 403);
+      await put("requests", reqs.filter((x) => x.id !== rid));
+      return json({ ok: true });
+    }
+    if (body.status !== undefined) {
+      if (!["pending", "accepted", "rejected"].includes(body.status)) return json({ error: "Неверный статус." }, 400);
+      r.status = body.status;
+      r.handledBy = body.status === "pending" ? "" : me.name;
+      r.handledAt = body.status === "pending" ? 0 : Date.now();
+    }
+    if (body.note !== undefined) r.note = String(body.note).slice(0, 500);
+    await put("requests", reqs);
+    return json({ ok: true, request: r });
   }
   if (path === "/push/subscribe" && m === "POST") {
     const sb = body.subscription || {};
@@ -225,7 +270,7 @@ async function handle(req) {
         if (!full(me) || u.role === "director" || u.id === me.id) return json({ ok: false, error: "Менять права этого аккаунта нельзя." }, 403);
         u.level = body.level === "full" ? "full" : "limited";
         const pr = body.perms || {};
-        u.perms = u.level === "full" ? {} : { tasks: !!pr.tasks, staff: !!pr.staff, content: !!pr.content };
+        u.perms = u.level === "full" ? {} : { tasks: !!pr.tasks, staff: !!pr.staff, content: !!pr.content, requests: !!pr.requests };
       }
       if (creds) u.tv = (u.tv || 0) + 1;
       await put("users", list);

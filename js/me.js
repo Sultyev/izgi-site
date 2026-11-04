@@ -12,7 +12,7 @@
   const read = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || 'null') || d; } catch (e) { return d; } };
   const u = (read('izgi.staff.users.v1', []).find((x) => x.id === s.user.id)) || s.user;
   const full = u.role === 'director' || u.level === 'full';
-  const admin = full || ['tasks', 'staff', 'content'].some((p) => u.perms && u.perms[p]);
+  const admin = full || ['tasks', 'staff', 'content', 'requests'].some((p) => u.perms && u.perms[p]);
   const home = u.role === 'director' ? 'admin.html' : 'tasks.html';
   const initials = (n) => String(n || '').trim().split(/\s+/).slice(0, 2).map((w) => w[0] || '').join('').toUpperCase() || '?';
 

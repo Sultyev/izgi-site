@@ -223,3 +223,27 @@ body.nav-open{overflow:hidden}
 }
 @media(min-width:1181px){.nav-overlay,.nav-head,.nav-langs{display:none}}
 @media(prefers-reduced-motion:reduce){body>nav#nav,.nav-overlay{transition:none!important}}
+
+.hp{position:absolute!important;left:-9999px!important;width:1px;height:1px;opacity:0}
+
+/* ===== кнопка и панель «Язык» (иконка глобуса) ===== */
+.topright{position:relative}
+.lang-btn{display:flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:999px;border:1px solid var(--gl-edge,#fff);background:var(--gl,rgba(255,255,255,.6));-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:var(--blue-d,#00106b);font:700 .8rem Montserrat,sans-serif;cursor:pointer;order:0}
+.lang-btn svg{flex:none}
+@media(min-width:1181px){.lang-btn{order:3}.me{order:4}}
+.lang-panel{position:absolute;right:0;top:calc(100% + 10px);width:260px;padding:14px;border-radius:20px;background:rgba(255,255,255,.95);-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);border:1px solid var(--gl-edge,#fff);box-shadow:0 18px 50px rgba(0,16,107,.22);z-index:40;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .2s,transform .2s,visibility 0s .2s}
+.lang-panel.open{opacity:1;visibility:visible;transform:none;transition:opacity .2s,transform .2s}
+.lang-head{display:flex;align-items:center;gap:10px;padding:2px 2px 12px;margin-bottom:10px;border-bottom:1px solid rgba(0,16,107,.1);color:#01a09c}
+.lang-title{flex:1;font-size:1.1rem;color:var(--blue-d,#00106b)}
+.lang-close{width:36px;height:36px;border-radius:12px;border:1px solid var(--gl-edge,#fff);background:var(--gl,rgba(255,255,255,.6));font-size:1.5rem;line-height:1;color:var(--blue-d,#00106b);cursor:pointer}
+.lang-panel .lang-list{display:grid;gap:8px;margin:0}
+.lang-panel .lang-list .lang{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;padding:13px 16px;border-radius:14px;font-weight:700}
+.lang-panel .lang-list .lang::after{content:attr(data-name);font-weight:600}
+@media(max-width:1180px){
+body>.lang-panel{position:fixed;top:0;right:0;bottom:0;left:auto;width:min(86vw,340px);padding:18px 16px calc(24px + env(safe-area-inset-bottom));border-radius:24px 0 0 24px;box-shadow:-20px 0 60px rgba(0,16,107,.25);z-index:60;opacity:1;transform:translateX(110%);transition:transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s .32s}
+body>.lang-panel.open{transform:none;transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+}
+@media(max-width:520px){.lang-cur{display:none}.lang-btn{padding:0 11px}}
+body.lang-open .nav-overlay{opacity:1;pointer-events:auto}
+body.lang-open{overflow:hidden}
+@media(prefers-reduced-motion:reduce){.lang-panel,body>.lang-panel{transition:none!important}}

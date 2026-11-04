@@ -395,7 +395,7 @@ $('#nAdd').addEventListener('click',()=>{
   const ready=$('#status');if(ready)ready.textContent='Панель готова';
 
   (function gate(){
-    const need={tasks:'tasks',staff:'staff'};
+    const need={tasks:'tasks',staff:'staff',requests:'requests'};
     const tabs=$$('#tabs button');
     tabs.forEach(b=>{if(!auth.can(me,need[b.dataset.tab]||'content'))b.hidden=true});
     const first=tabs.find(b=>!b.hidden),on=tabs.find(b=>b.classList.contains('on'));

@@ -21,6 +21,7 @@
 <script src="js/tasks-store.js" defer></script>
 <script src="js/admin.js" defer></script>
 <script src="js/staff-ui.js" defer></script>
+<script src="js/admin-requests.js" defer></script>
 <script src="js/admin-tasks.js" defer></script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
@@ -48,7 +49,8 @@
 
 <nav class="atabs" id="tabs" aria-label="Разделы панели">
   <button type="button" data-tab="tasks" class="on">Задачи</button>
-  <button type="button" data-tab="staff">Сотрудники</button>
+  <button type="button" data-tab="requests">Заявки <span class="tabcount" id="reqBadge" hidden>0</span></button>
+    <button type="button" data-tab="staff">Сотрудники</button>
   <button type="button" data-tab="texts">Тексты</button>
   <button type="button" data-tab="schedule">Расписание</button>
   <button type="button" data-tab="news">Новости</button>
@@ -153,7 +155,12 @@
     </div>
   </section>
 
-  <section class="panel" data-panel="staff" hidden>
+  <section class="panel" data-panel="requests" hidden>
+      <div class="panelhead"><div><h2>Заявки на экскурсию</h2><p class="hint">Без отметки заявка остаётся «На рассмотрении».</p></div></div>
+      <div class="req-filters" id="reqFilters" role="group" aria-label="Фильтр заявок"></div>
+      <div class="req-list" id="reqList" aria-live="polite"></div>
+    </section>
+    <section class="panel" data-panel="staff" hidden>
     <div class="panelhead">
       <div>
         <h2>Сотрудники</h2>
