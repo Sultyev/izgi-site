@@ -435,7 +435,7 @@
     <div class="s-field"><label for="accPass">Новый пароль</label><input class="inp" id="accPass" maxlength="64" placeholder="Оставьте пустым, чтобы не менять"></div>
     <fieldset class="acc-rights" id="accRights"><legend>Права доступа</legend>
       <label class="acc-opt"><input type="radio" name="accLevel" value="limited"> Ограниченные: только свои задачи и фото</label>
-      <label class="acc-opt"><input type="radio" name="accLevel" value="full"> Полный доступ: все возможности директора</label>
+      <label class="acc-opt"><input type="radio" name="accLevel" value="full"> Полный доступ: задачи, команда, контент и заявки</label>
       <div class="acc-perms" id="accPerms">
         <span class="acc-hint">Дополнительно к ограниченным:</span>
         <label class="acc-opt"><input type="checkbox" data-perm="tasks"> Задачи сотрудников</label>

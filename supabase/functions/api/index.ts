@@ -91,7 +91,7 @@ async function handle(req) {
   const url = new URL(req.url);
   const path = url.pathname.replace(/^.*?\/api(?=\/|$)/, "") || "/";
   const m = req.method;
-  if (path === "/content" && m === "GET") return json(await get("content", {}), 200, { "cache-control": "public, max-age=15" });
+  if (path === "/content" && m === "GET") return json({ ...(await get("content", {})), settings: await get("settings", { staffLink: true }) }, 200, { "cache-control": "public, max-age=15" });
   if (path === "/push/key" && m === "GET") return json({ key: (await vapid()).publicKey }, 200, { "cache-control": "public, max-age=300" });
   if (!env("AUTH_SECRET")) return json({ error: "Сервер не настроен: задайте секрет AUTH_SECRET." }, 500);
   const body = m === "GET" ? {} : await req.json().catch(() => ({}));
@@ -160,6 +160,13 @@ async function handle(req) {
       if (globalThis.EdgeRuntime && EdgeRuntime.waitUntil) EdgeRuntime.waitUntil(job); else await job;
     }
     return json({ tasks: all.filter(mine) });
+  }
+  if (path === "/settings" && m === "PUT") {
+    if (!full(me)) return json({ error: "Менять настройки сайта могут директор и сотрудники с полным доступом." }, 403);
+    const next = { ...(await get("settings", { staffLink: true })) };
+    if (typeof body.staffLink === "boolean") next.staffLink = body.staffLink;
+    await put("settings", next);
+    return json({ ok: true, settings: next });
   }
   if (path === "/requests" && m === "GET") {
     if (!can(me, "requests")) return json({ error: "Нет доступа." }, 403);

@@ -21,6 +21,7 @@
 <script src="js/tasks-store.js" defer></script>
 <script src="js/admin.js" defer></script>
 <script src="js/staff-ui.js" defer></script>
+<script src="js/admin-settings.js" defer></script>
 <script src="js/admin-requests.js" defer></script>
 <script src="js/admin-tasks.js" defer></script>
 <link rel="manifest" href="manifest.webmanifest">
@@ -31,7 +32,7 @@
 <header class="abar">
   <div class="brand">
     <span class="logo">ИЗГИ</span>
-    <div><strong>Панель директора</strong><small>задачи, сотрудники и контент сайта</small></div>
+    <div><strong id="panelTitle">Панель директора</strong><small>задачи, сотрудники и контент сайта</small></div>
   </div>
   <div class="acts">
     <div class="who" title="Текущий пользователь">
@@ -57,6 +58,7 @@
   <button type="button" data-tab="team">Команда</button>
   <button type="button" data-tab="contacts">Контакты</button>
   <button type="button" data-tab="data">Данные</button>
+    <button type="button" data-tab="settings">Настройки</button>
 </nav>
 
 <main class="wrap">
@@ -190,7 +192,7 @@
             <label for="staffPassword">Пароль</label>
             <input class="inp" id="staffPassword" type="text" maxlength="64" autocomplete="off" placeholder="не короче 6 символов" required>
           </div>
-          <div class="s-field" id="staffLevelField"> <label for="staffLevel">Права</label> <select class="inp" id="staffLevel"> <option value="limited">Ограниченные: свои задачи</option> <option value="full">Полный доступ: все возможности директора</option> </select> <span class="s-hint">Отдельные права (задачи, контент, аккаунты) настраиваются кнопкой «Изменить».</span> </div>
+          <div class="s-field" id="staffLevelField"> <label for="staffLevel">Права</label> <select class="inp" id="staffLevel"> <option value="limited">Ограниченные: свои задачи</option> <option value="full">Полный доступ: задачи, команда, контент и заявки</option> </select> <span class="s-hint">Отдельные права (задачи, контент, аккаунты) настраиваются кнопкой «Изменить».</span> </div>
           <p class="s-error" id="staffError" role="alert" aria-live="polite"></p>
           <div class="t-form-actions">
             <button class="btn pri" type="submit">Создать аккаунт</button>
@@ -303,7 +305,16 @@
     <div class="rows" id="cRows"></div>
   </section>
 
-  <section class="panel" data-panel="data" hidden>
+  <section class="panel" data-panel="settings" hidden>
+      <div class="panelhead"><div><h2>Настройки сайта</h2></div></div>
+      <div class="set-card">
+        <label class="switch"><input type="checkbox" id="setStaffLink"><span class="slider" aria-hidden="true"></span><span class="set-text"><strong>Кнопка «Для сотрудников» на сайте</strong><small id="setStaffState">Загрузка…</small></span></label>
+        <p class="set-note">Если выключить, гости не увидят в подвале сайта кнопку входа. Сотрудники заходят по прямой ссылке — сохраните её в закладках:</p>
+        <div class="set-link"><code id="setLoginUrl"></code><button type="button" class="btn sm" id="setCopy">Скопировать</button></div>
+        <p class="set-note">Вошедшие сотрудники видят свой аватар в шапке сайта и «Мой кабинет» в подвале в любом случае.</p>
+      </div>
+    </section>
+    <section class="panel" data-panel="data" hidden>
     <h2>Данные и публикация</h2>
     <p class="hint">Правки хранятся в этом браузере (localStorage) и сразу применяются ко всем страницам сайта. Чтобы правки увидели все, опубликуйте файл и замените им <code>js/content-data.js</code>.</p>
     <ol class="steps">

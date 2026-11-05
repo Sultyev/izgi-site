@@ -9,7 +9,7 @@
       x.open('GET', A + '/content', !sync);
       x.onload = function () {
         if (x.status !== 200) return;
-        try { var d = JSON.parse(x.responseText); localStorage.setItem(K, JSON.stringify(d)); if (sync) window.IZGI_DATA = d; } catch (e) { /* не JSON */ }
+        try { var d = JSON.parse(x.responseText); localStorage.setItem(K, JSON.stringify(d)); if (sync) window.IZGI_DATA = d; window.dispatchEvent(new CustomEvent('izgi:content', { detail: d })); } catch (e) { /* не JSON */ }
       };
       x.send();
     } catch (e) { /* нет связи */ }

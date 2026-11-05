@@ -17,10 +17,10 @@
   const initials = (n) => String(n || '').trim().split(/\s+/).slice(0, 2).map((w) => w[0] || '').join('').toUpperCase() || '?';
 
   const T = {
-    ru: { tasks: 'Мои задачи', panel: 'Панель управления', out: 'Выйти', cab: 'Мой кабинет', dir: 'Директор', full: 'Полный доступ', ext: 'Расширенные права', staff: 'Сотрудник' },
-    kg: { tasks: 'Менин тапшырмаларым', panel: 'Башкаруу панели', out: 'Чыгуу', cab: 'Менин кабинетим', dir: 'Директор', full: 'Толук мүмкүнчүлүк', ext: 'Кеңейтилген укуктар', staff: 'Кызматкер' },
-    en: { tasks: 'My tasks', panel: 'Control panel', out: 'Sign out', cab: 'My account', dir: 'Director', full: 'Full access', ext: 'Extended rights', staff: 'Staff' },
-    tr: { tasks: 'Görevlerim', panel: 'Yönetim paneli', out: 'Çıkış', cab: 'Hesabım', dir: 'Müdür', full: 'Tam erişim', ext: 'Genişletilmiş yetki', staff: 'Personel' }
+    ru: { tasks: 'Мои задачи', panelDir: 'Панель директора', panel: 'Панель управления', out: 'Выйти', cab: 'Мой кабинет', dir: 'Директор', full: 'Полный доступ', ext: 'Расширенные права', staff: 'Сотрудник' },
+    kg: { tasks: 'Менин тапшырмаларым', panelDir: 'Директордун панели', panel: 'Башкаруу панели', out: 'Чыгуу', cab: 'Менин кабинетим', dir: 'Директор', full: 'Толук мүмкүнчүлүк', ext: 'Кеңейтилген укуктар', staff: 'Кызматкер' },
+    en: { tasks: 'My tasks', panelDir: 'Director panel', panel: 'Control panel', out: 'Sign out', cab: 'My account', dir: 'Director', full: 'Full access', ext: 'Extended rights', staff: 'Staff' },
+    tr: { tasks: 'Görevlerim', panelDir: 'Müdür paneli', panel: 'Yönetim paneli', out: 'Çıkış', cab: 'Hesabım', dir: 'Müdür', full: 'Tam erişim', ext: 'Genişletilmiş yetki', staff: 'Personel' }
   };
   const lang = () => { const l = (window.I18N && window.I18N.lang) || document.documentElement.lang || 'ru'; return T[l] ? l : 'ru'; };
   const L = (k) => T[lang()][k];
@@ -58,7 +58,7 @@
 
   function labels() {
     lvl.textContent = u.role === 'director' ? L('dir') : full ? L('full') : admin ? L('ext') : L('staff');
-    aTasks.textContent = L('tasks'); aPanel.textContent = L('panel'); out.textContent = L('out');
+    aTasks.textContent = L('tasks'); aPanel.textContent = u.role === 'director' ? L('panelDir') : L('panel'); out.textContent = L('out');
     const f = document.querySelector('.adminlink');
     if (f) { f.removeAttribute('data-i18n'); f.href = home; f.textContent = L('cab'); }
   }

@@ -395,9 +395,12 @@ $('#nAdd').addEventListener('click',()=>{
   const ready=$('#status');if(ready)ready.textContent='Панель готова';
 
   (function gate(){
+    const isDir=me.role==='director';
+    document.title=(isDir?'Панель директора':'Панель управления')+' — ИЗГИ';
+    const pt=$('#panelTitle');if(pt)pt.textContent=isDir?'Панель директора':'Панель управления';
     const need={tasks:'tasks',staff:'staff',requests:'requests'};
     const tabs=$$('#tabs button');
-    tabs.forEach(b=>{if(!auth.can(me,need[b.dataset.tab]||'content'))b.hidden=true});
+    tabs.forEach(b=>{const t=b.dataset.tab;if(t==='settings'?!auth.isFull(me):!auth.can(me,need[t]||'content'))b.hidden=true});
     const first=tabs.find(b=>!b.hidden),on=tabs.find(b=>b.classList.contains('on'));
     if(first&&(!on||on.hidden))first.click();
     if(me.role!=='director'){const a=document.createElement('a');a.className='btn ghost';a.href='tasks.html';a.textContent='Мои задачи';const lo=$('#btnLogout');if(lo&&lo.parentNode)lo.parentNode.insertBefore(a,lo)}
