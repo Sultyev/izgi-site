@@ -174,9 +174,12 @@ function renderNews(){
   });
 }
 function renderTeam(){
-  const grid=document.querySelector('main .grid');
-  if(!grid||!document.querySelector('.ava')||!DATA.team||!DATA.team.length)return;
+  const grid=document.querySelector('.team-grid');
+  if(!grid)return;
+  const none=!(DATA.team&&DATA.team.length);
+  const tn=document.getElementById('teamNone');if(tn)tn.hidden=!none;
   $$('.team-extra',grid).forEach(n=>n.remove());
+  if(none)return;
   DATA.team.forEach(m=>{
     const card=document.createElement('div');
     card.className='card glass team-extra';

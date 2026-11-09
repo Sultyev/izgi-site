@@ -356,11 +356,11 @@ $('#nAdd').addEventListener('click',()=>{
     let s='';for(const b of bytes)s+=String.fromCharCode(b);
     return btoa(s);
   };
+  /* Контент (вместе с фото) слишком велик для адреса страницы, поэтому сохраняем его в localStorage:
+     страницы в окне предпросмотра той же вкладки читают его оттуда. */
   const previewUrl=()=>{
-    const page=$('#pvPage').value;
-    const hasText=LANGS.some(l=>Object.keys(LOC.text[l]||{}).length);
-    const empty=!hasText&&!LOC.schedule&&!LOC.news&&!LOC.team;
-    return empty?page:page+'?izgi='+encodeURIComponent(enc(LOC));
+    if(!store.save(LOC))say('Не хватило места в браузере для предпросмотра');
+    return $('#pvPage').value+'?pv='+Date.now();
   };
   const openPreview=()=>{drawer.hidden=false;frame.src=previewUrl()};
   $('#btnPreview').addEventListener('click',()=>{drawer.hidden?openPreview():drawer.hidden=true});
