@@ -195,3 +195,12 @@ button.t-stat:focus-visible{outline:3px solid #0057b8;outline-offset:2px}
 .set-note{margin:0;font-size:.9rem;color:#4a5b7a}
 .set-link{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .set-link code{padding:8px 12px;border-radius:10px;background:#f2f4f7;word-break:break-all;font-size:.85rem}
+
+/* выбор зарегистрированных сотрудников для команды */
+.acc-pick{display:grid;gap:10px;margin-top:10px}
+.pick-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid #e3e8ee;border-radius:12px;background:#fff}
+.pick-row .s-avatar{width:40px;height:40px;flex:none}
+.pick-main{flex:1;min-width:0;display:grid}
+.pick-main strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick-main span{font-size:.82rem;color:#5a6068}
+.pick-row .btn[disabled],#tPickAll[disabled]{opacity:.55;cursor:default}

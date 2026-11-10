@@ -272,8 +272,13 @@
 
   <section class="panel" data-panel="team" hidden>
     <h2>Команда</h2>
-    <p class="hint">Стандартные четверо правятся во вкладке «Тексты» (ключи team1–team4). Здесь можно добавить новых сотрудников.</p>
+    <p class="hint">Сотрудники из этого списка показываются на странице «Команда».</p>
     <div class="cards" id="teamList"></div>
+    <div class="formcard" id="tFromAcc">
+      <div class="panelhead"><h3>Добавить зарегистрированных</h3><button class="btn sm" id="tPickAll" type="button">Добавить всех</button></div>
+      <p class="hint">Имя, должность, цвет и фото берутся из аккаунта. Описание и перевод можно дописать после.</p>
+      <div class="acc-pick" id="tPick"></div>
+    </div>
     <div class="formcard">
       <h3>Новый сотрудник</h3>
       <div class="langs3" style="margin-bottom:10px">

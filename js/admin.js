@@ -265,6 +265,7 @@ $('#nAdd').addEventListener('click',()=>{
   const teamList=$('#teamList');
   function renderTeamList(){
     teamList.innerHTML='';
+    queueMicrotask(renderPick);
     const arr=(LOC.team&&LOC.team.length?LOC.team:(PUB.team||[]));
     if(!arr.length){teamList.innerHTML='<div class="empty">Добавленных сотрудников пока нет</div>';return}
     arr.forEach((m,i)=>{
@@ -275,9 +276,58 @@ $('#nAdd').addEventListener('click',()=>{
       const p=document.createElement('p');p.textContent=(m.desc&&(m.desc.ru||m.desc.kg||m.desc.en))||'';
       const del=document.createElement('button');del.type='button';del.className='btn sm danger';del.textContent='Удалить';
       del.addEventListener('click',()=>{LOC.team=arr.filter((x,j)=>j!==i);persist('Сохранено');renderTeamList()});
-      c.append(meta,h,st,p,photoCtl(m,renderTeamList,480,true,'team',arr),del);teamList.appendChild(c);
+      const acc=m.uid&&auth.users().find(x=>x.id===m.uid);
+      const sync=document.createElement('button');sync.type='button';sync.className='btn sm';sync.textContent='Обновить из аккаунта';sync.hidden=!acc;
+      sync.addEventListener('click',()=>{
+        if(!(LOC.team&&LOC.team.length))LOC.team=arr;
+        m.name={ru:acc.name,kg:acc.name,en:acc.name};
+        m.role={ru:acc.position||'',kg:(m.role&&m.role.kg)||acc.position||'',en:(m.role&&m.role.en)||acc.position||''};
+        m.letter=(acc.name||'?').trim().charAt(0).toUpperCase();if(acc.color)m.color=acc.color;
+        const ph=window.IZGI_AVATAR&&window.IZGI_AVATAR.get(acc.id);if(ph)m.photo=ph;
+        persist('Сохранено');renderTeamList();say('Данные обновлены из аккаунта');
+      });
+      c.append(meta,h,st,p,photoCtl(m,renderTeamList,480,true,'team',arr),sync,del);teamList.appendChild(c);
     });
   }
+  /* ----- добавить уже зарегистрированных сотрудников ----- */
+  const tPick=$('#tPick');
+  const teamNow=()=>(LOC.team&&LOC.team.length?LOC.team:(PUB.team||[]));
+  function memberFromAccount(u){
+    const photo=window.IZGI_AVATAR&&window.IZGI_AVATAR.get(u.id);
+    const pos=u.position||'';
+    return Object.assign({uid:u.id,letter:(u.name||'?').trim().charAt(0).toUpperCase(),color:u.color||'#01a09c',
+      name:{ru:u.name,kg:u.name,en:u.name},role:{ru:pos,kg:pos,en:pos},desc:{ru:'',kg:'',en:''}},photo?{photo}:{});
+  }
+  function addFromAccounts(list){
+    const have=new Set(teamNow().map(m=>m.uid).filter(Boolean));
+    const fresh=list.filter(u=>!have.has(u.id));
+    if(!fresh.length){say('Все уже в команде');return}
+    LOC.team=teamNow().slice().concat(fresh.map(memberFromAccount));
+    persist('Сохранено');renderTeamList();
+    say(fresh.length===1?'«'+fresh[0].name+'» добавлен(а) в команду':'Добавлено в команду: '+fresh.length);
+  }
+  function renderPick(){
+    if(!tPick)return;
+    const have=new Set(teamNow().map(m=>m.uid).filter(Boolean));
+    const users=auth.users();
+    tPick.innerHTML='';
+    if(!users.length){tPick.innerHTML='<div class="empty">Зарегистрированных сотрудников пока нет</div>';return}
+    users.forEach(u=>{
+      const row=document.createElement('div');row.className='pick-row';
+      const ava=document.createElement('span');ava.className='s-avatar';ava.dataset.uid=u.id;ava.textContent=(u.name||'?').trim().charAt(0).toUpperCase();
+      const main=document.createElement('div');main.className='pick-main';
+      const n=document.createElement('strong');n.textContent=u.name;
+      const p=document.createElement('span');p.textContent=u.position||'';
+      main.append(n,p);
+      const b=document.createElement('button');b.type='button';b.className='btn sm';
+      if(have.has(u.id)){b.textContent='Уже в команде';b.disabled=true}else{b.textContent='Добавить';b.addEventListener('click',()=>addFromAccounts([u]))}
+      row.append(ava,main,b);tPick.appendChild(row);
+    });
+    const all=$('#tPickAll');if(all)all.disabled=users.every(u=>have.has(u.id));
+  }
+  if($('#tPickAll'))$('#tPickAll').addEventListener('click',()=>addFromAccounts(auth.users()));
+  window.addEventListener('staffchange',renderPick);
+
   $('#tAdd').addEventListener('click',()=>{
     const name=$('#tName').value.trim();
     if(!name){say('Укажите имя');return}
@@ -389,7 +439,7 @@ $('#nAdd').addEventListener('click',()=>{
   }
 
   /* ---------- старт ---------- */
-  renderText();renderContacts();renderSched();renderNewsList();renderTeamList();renderJson();
+  renderText();renderContacts();renderSched();renderNewsList();renderTeamList();renderPick();renderJson();
   const initial=(location.hash||'').replace(/^#/,'');
   showTab($$('#tabs button').some(b=>b.dataset.tab===initial)?initial:'tasks',false);
   const ready=$('#status');if(ready)ready.textContent='Панель готова';
