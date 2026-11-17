@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Montserrat:wght@400;600;700;800&family=Unbounded:wght@500;600;700;800&display=swap&subset=cyrillic">
-<link rel="stylesheet" href="css/staff.css?v=202611100202">
+<link rel="stylesheet" href="css/staff.css?v=202611160651">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/icon-180.png">
 <meta name="theme-color" content="#01a09c">
@@ -51,6 +51,22 @@
     </div>
     <span class="date-chip" id="todayChip"></span>
   </div>
+      <section class="t-rating glass" id="ratingCard" aria-label="Мой рейтинг">
+        <div class="rt-ring"><b id="rtScore">10.0</b><span id="rtMax">из 10</span></div>
+        <div class="rt-body">
+          <h2>Мой рейтинг</h2>
+          <p id="rtHint"></p>
+          <ol class="rt-log" id="rtLog"></ol>
+          <details class="rt-rules"><summary>Как считаются баллы</summary>
+            <ul>
+              <li><b>+0.1</b> за задачу, сданную вовремя, если рейтинг ниже 10.</li>
+              <li><b>−0.5</b> за просрочку. После срока есть время сдать работу: 5 ч при низком, 3 ч при обычном и 2 ч при высоком приоритете.</li>
+              <li><b>−1</b> если не успели: задача отменяется автоматически.</li>
+              <li><b>+1</b> бонус, если в течение месяца все задачи сданы вовремя (максимум 11).</li>
+            </ul>
+          </details>
+        </div>
+      </section>
 
   <div class="t-stats" aria-label="Сводка по задачам">
     <button type="button" class="t-stat" data-go="all" title="Показать задачи">
@@ -94,6 +110,7 @@
         <button class="t-filter" type="button" data-filter="progress">В работе <span class="n">0</span></button>
         <button class="t-filter" type="button" data-filter="review">На проверке <span class="n">0</span></button>
         <button class="t-filter" type="button" data-filter="done">Выполнено <span class="n">0</span></button>
+        <button class="t-filter" type="button" data-filter="cancelled">Отменено <span class="n">0</span></button>
         <button class="t-filter" type="button" data-filter="overdue">Просрочено <span class="n">0</span></button>
       </div>
     </div>
@@ -103,13 +120,13 @@
 
 <div class="s-toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="js/avatar.js?v=202611100202" defer></script>
-<script src="js/config.js?v=202611100202"></script>
-<script src="js/sync.js?v=202611100202" defer></script>
-<script src="js/staff-auth.js?v=202611100202" defer></script>
-<script src="js/tasks-store.js?v=202611100202" defer></script>
-<script src="js/staff-ui.js?v=202611100202" defer></script>
-<script src="js/push.js?v=202611100202" defer></script>
-<script src="js/tasks.js?v=202611100202" defer></script>
+<script src="js/avatar.js?v=202611160651" defer></script>
+<script src="js/config.js?v=202611160651"></script>
+<script src="js/sync.js?v=202611160651" defer></script>
+<script src="js/staff-auth.js?v=202611160651" defer></script>
+<script src="js/tasks-store.js?v=202611160651" defer></script>
+<script src="js/staff-ui.js?v=202611160651" defer></script>
+<script src="js/push.js?v=202611160651" defer></script>
+<script src="js/tasks.js?v=202611160651" defer></script>
 </body>
 </html>

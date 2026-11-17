@@ -6,7 +6,8 @@
     new: { label: 'Новая', order: 0 },
     progress: { label: 'В работе', order: 1 },
     review: { label: 'На проверке', order: 2 },
-    done: { label: 'Выполнена', order: 3 }
+    done: { label: 'Выполнена', order: 3 },
+    cancelled: { label: 'Отменена', order: 4 }
   };
   const PRIORITY = {
     low: { label: 'Низкий', order: 0 },
@@ -183,6 +184,7 @@
     if (Object.prototype.hasOwnProperty.call(patch, 'due')) task.due = String(patch.due || '');
     if (PRIORITY[patch.priority]) task.priority = patch.priority;
     if (STATUS[patch.status]) task.status = patch.status;
+    if (patch.reopen) task.reopen = true;
     if (task.status === 'progress' && before !== 'progress' && !task.startedAt) task.startedAt = nowISO();
     if (task.status === 'done') {
       if (!task.completedAt) task.completedAt = nowISO();
@@ -210,9 +212,10 @@
     return read()
       .filter(task => task.assigneeId === id)
       .sort((a, b) => {
-        if (a.status === 'done' && b.status !== 'done') return 1;
-        if (b.status === 'done' && a.status !== 'done') return -1;
-        return String(a.due || '9999').localeCompare(String(b.due || '9999'));
+        if (isClosed(a) && !isClosed(b)) return 1;
+        if (isClosed(b) && !isClosed(a)) return -1;
+        const x = dueMs(a.due), y = dueMs(b.due);
+        return (isNaN(x) ? 9e15 : x) - (isNaN(y) ? 9e15 : y);
       });
   }
 
@@ -221,7 +224,7 @@
   }
 
   function activeFor(id) {
-    return byAssignee(id).filter(task => task.status !== 'done');
+    return byAssignee(id).filter(task => !isClosed(task));
   }
 
   function plural(number, forms) {
@@ -233,48 +236,63 @@
     return forms[2];
   }
 
-  function dueInfo(value) {
-    if (!value) return { label: 'Без дедлайна', short: '—', days: null, overdue: false, soon: false, tone: 'none' };
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const due = new Date(value + 'T00:00:00');
-    if (isNaN(due.getTime())) return { label: 'Без дедлайна', short: '—', days: null, overdue: false, soon: false, tone: 'none' };
-    const days = Math.round((due - today) / 86400000);
-    const dateLabel = due.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-    let label = 'До ' + dateLabel;
-    let tone = 'later';
-    if (days < 0) {
-      label = 'Просрочено на ' + -days + ' ' + plural(-days, ['день', 'дня', 'дней']);
-      tone = 'overdue';
-    } else if (days === 0) {
-      label = 'Сегодня, ' + dateLabel;
-      tone = 'today';
-    } else if (days === 1) {
-      label = 'Завтра, ' + dateLabel;
-      tone = 'soon';
-    } else if (days <= 3) {
-      label = 'Через ' + days + ' ' + plural(days, ['день', 'дня', 'дней']) + ' · ' + dateLabel;
-      tone = 'soon';
-    }
-    return {
-      label,
-      short: dateLabel,
-      days,
-      overdue: days < 0,
-      soon: days >= 0 && days <= 3,
-      tone
-    };
+  /* Срок хранится как «ГГГГ-ММ-ДДTЧЧ:ММ» по времени Бишкека (UTC+6); старые задачи с одной датой считаются до 23:59. */
+  const TZ = '+06:00', ZONE = 'Asia/Bishkek';
+  const GRACE_H = { low: 5, normal: 3, high: 2 };
+  function dueMs(value) {
+    if (!value) return NaN;
+    const v = String(value);
+    return Date.parse(v.length > 10 ? v.slice(0, 16) + ':00' + TZ : v + 'T23:59:00' + TZ);
   }
+  function dur(ms) {
+    const m = Math.max(1, Math.round(ms / 60000));
+    if (m < 60) return m + ' мин';
+    const h = Math.floor(m / 60), r = m % 60;
+    if (h < 24) return h + ' ч' + (r ? ' ' + r + ' мин' : '');
+    const d = Math.floor(h / 24);
+    return d + ' ' + plural(d, ['день', 'дня', 'дней']) + (h % 24 ? ' ' + (h % 24) + ' ч' : '');
+  }
+  const dayKey = ms => new Date(ms + 6 * 3600e3).toISOString().slice(0, 10);
+  function dueInfo(value, priority) {
+    const none = { label: 'Без дедлайна', short: '—', days: null, overdue: false, soon: false, tone: 'none' };
+    const t = dueMs(value);
+    if (!value || isNaN(t)) return none;
+    const hasTime = String(value).length > 10;
+    const now = Date.now(), diff = t - now;
+    const dateLabel = new Date(t).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: ZONE });
+    const timeLabel = new Date(t).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: ZONE });
+    const when = hasTime ? dateLabel + ', ' + timeLabel : dateLabel;
+    const days = Math.round((Date.parse(dayKey(t) + 'T00:00:00Z') - Date.parse(dayKey(now) + 'T00:00:00Z')) / 86400000);
+    let label = 'До ' + when, tone = 'later';
+    if (diff < 0) {
+      const over = -diff;
+      const left = (GRACE_H[priority] || 0) * 3600e3 - over;
+      label = 'Просрочено на ' + dur(over) + (priority ? (left > 0 ? ' · до отмены ' + dur(left) : ' · будет отменена') : '');
+      tone = 'overdue';
+    } else if (hasTime && diff < 24 * 3600e3) {
+      label = 'Через ' + dur(diff) + ' · ' + timeLabel;
+      tone = diff < 3 * 3600e3 ? 'today' : 'soon';
+    } else if (days === 0) { label = 'Сегодня, ' + when; tone = 'today'; }
+    else if (days === 1) { label = 'Завтра, ' + when; tone = 'soon'; }
+    else if (days <= 3) { label = 'Через ' + days + ' ' + plural(days, ['день', 'дня', 'дней']) + ' · ' + when; tone = 'soon'; }
+    return { label, short: when, days, overdue: diff < 0, soon: diff >= 0 && days <= 3, tone, ms: t };
+  }
+  const isClosed = task => task.status === 'done' || task.status === 'cancelled';
+
+  /* Рейтинг считает сервер; здесь только чтение того, что пришло. */
+  const RKEY = 'izgi.ratings.v1';
+  function ratings() { try { return JSON.parse(localStorage.getItem(RKEY) || '{}'); } catch (e) { return {}; } }
+  function ratingFor(id) { return ratings()[id] || { score: 10, log: [] }; }
 
   function stats() {
     const list = read();
     return {
       total: list.length,
-      active: list.filter(task => task.status !== 'done').length,
+      active: list.filter(task => !isClosed(task)).length,
       progress: list.filter(task => task.status === 'progress').length,
       review: list.filter(task => task.status === 'review').length,
       done: list.filter(task => task.status === 'done').length,
-      overdue: list.filter(task => task.status !== 'done' && dueInfo(task.due).overdue).length
+      overdue: list.filter(task => !isClosed(task) && dueInfo(task.due).overdue).length
     };
   }
 
@@ -298,6 +316,11 @@
     currentFor,
     activeFor,
     dueInfo,
+    isClosed,
+    ratings,
+    ratingFor,
+    RKEY,
+    GRACE_H,
     stats
   };
 })();

@@ -84,7 +84,7 @@
     const active = tasks.filter(task => task.status !== 'done');
     const progress = tasks.filter(task => task.status === 'progress');
     const review = tasks.filter(task => task.status === 'review');
-    const overdue = active.filter(task => store.dueInfo(task.due).overdue);
+    const overdue = active.filter(task => store.dueInfo(task.due, task.priority).overdue);
 
     $('#statActive').textContent = active.length;
     $('#statProgress').textContent = progress.length;
@@ -100,7 +100,8 @@
       progress: tasks.filter(task => task.status === 'progress').length,
       review: tasks.filter(task => task.status === 'review').length,
       done: tasks.filter(task => task.status === 'done').length,
-      overdue: tasks.filter(task => task.status !== 'done' && window.TasksStore.dueInfo(task.due).overdue).length
+      cancelled: tasks.filter(task => task.status === 'cancelled').length,
+      overdue: tasks.filter(task => !store.isClosed(task) && window.TasksStore.dueInfo(task.due, task.priority).overdue).length
     };
     $$('#taskFilters .t-filter').forEach(button => {
       const count = counts[button.dataset.filter] || 0;
@@ -131,7 +132,7 @@
     empty.hidden = true;
     if (current.length === 1) {
       const task = current[0];
-      const due = store.dueInfo(task.due);
+      const due = store.dueInfo(task.due, task.priority);
       title.textContent = task.title;
       meta.innerHTML = [
         `<span class="s-badge ${esc(task.status)}">${esc(store.STATUS[task.status].label)}</span>`,
@@ -145,7 +146,7 @@
     title.textContent = `${current.length} ${plural(current.length, ['задача', 'задачи', 'задач'])} в работе`;
     meta.innerHTML = '<span>Отмечено как «в работе» или «на проверке»</span>';
     list.innerHTML = current.map(task => {
-      const due = store.dueInfo(task.due);
+      const due = store.dueInfo(task.due, task.priority);
       return `
         <div class="t-now-item">
           <div>
@@ -167,14 +168,14 @@
   }
 
   function taskCard(task) {
-    const due = store.dueInfo(task.due);
+    const due = store.dueInfo(task.due, task.priority);
     const action = actionFor(task);
     const completedDate = formatCompleted(task.completedAt);
     const dueLabel = task.status === 'done'
       ? 'Выполнено' + (completedDate ? ' ' + completedDate : '')
-      : due.label;
-    const dueTone = task.status === 'done'
-      ? ''
+      : task.status === 'cancelled' ? 'Отменена: не выполнена в срок' : due.label;
+    const dueTone = (task.status === 'done' || task.status === 'cancelled')
+      ? (task.status === 'cancelled' ? ' overdue' : '')
       : due.tone === 'overdue' ? ' overdue' : (due.tone === 'soon' || due.tone === 'today') ? ' soon' : '';
     const description = task.description ? `<p>${esc(task.description)}</p>` : '';
 
@@ -198,7 +199,7 @@
   }
 
   function renderList(tasks) {
-    const list = state.filter === 'all' ? tasks : state.filter === 'overdue' ? tasks.filter(task => task.status !== 'done' && window.TasksStore.dueInfo(task.due).overdue) : tasks.filter(task => task.status === state.filter);
+    const list = state.filter === 'all' ? tasks : state.filter === 'overdue' ? tasks.filter(task => !store.isClosed(task) && window.TasksStore.dueInfo(task.due, task.priority).overdue) : tasks.filter(task => task.status === state.filter);
     const box = $('#taskList');
     if (!list.length) {
       const messages = {
@@ -207,7 +208,8 @@
         progress: 'Нет задач в работе. Возьмите новую задачу из списка «Все».',
         review: 'Нет задач на проверке.',
         done: 'Выполненных задач пока нет.',
-        overdue: 'Просроченных задач нет.'
+        overdue: 'Просроченных задач нет.',
+        cancelled: 'Отменённых задач нет.'
       };
       box.innerHTML = `<div class="t-empty"><b>${esc(messages[state.filter] || messages.all)}</b>${state.filter === 'all' ? 'Когда задача появится, здесь будут сроки и кнопки для смены статуса.' : ''}</div>`;
       return;
@@ -217,7 +219,28 @@
 
   /* ---------- сборка страницы ---------- */
 
+  /* ---------- рейтинг ---------- */
+  function renderRating() {
+    const card = $('#ratingCard');
+    if (!card) return;
+    const r = store.ratingFor(me.id), score = Number(r.score);
+    $('#rtScore').textContent = score.toFixed(1);
+    $('#rtMax').textContent = score > 10 ? 'бонус +' + (score - 10).toFixed(1) : 'из 10';
+    card.style.setProperty('--p', Math.min(100, Math.max(0, score / 10 * 100)) + '%');
+    card.classList.toggle('bonus', score > 10);
+    card.classList.toggle('low', score < 7);
+    $('#rtHint').textContent = score >= 10
+      ? 'Высший балл. Так держать: выполняйте задачи вовремя.'
+      : 'Каждая задача, сданная вовремя, возвращает 0.1 балла, пока рейтинг не вернётся к 10.';
+    const fmt = ms => new Date(ms).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bishkek' });
+    $('#rtLog').innerHTML = r.log.length
+      ? r.log.slice(0, 8).map(e => `<li class="${e.d > 0 ? 'up' : 'down'}"><b>${e.d > 0 ? '+' : '−'}${Math.abs(e.d).toFixed(1)}</b><span>${esc(e.why)}</span><time>${esc(fmt(e.t))}</time></li>`).join('')
+      : '<li class="none">Изменений пока не было — у вас стартовые 10.0.</li>';
+  }
+  window.addEventListener('storage', e => { if (e.key === store.RKEY) renderRating(); });
+
   function renderAll() {
+    renderRating();
     const tasks = store.byAssignee(me.id);
     renderStats(tasks);
     renderFilterCounts(tasks);

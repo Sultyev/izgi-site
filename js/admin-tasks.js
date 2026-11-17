@@ -38,8 +38,8 @@
   }
 
   function todayISO() {
-    const date = new Date();
-    return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+    const date = new Date(), p = n => String(n).padStart(2, '0');
+    return date.getFullYear() + '-' + p(date.getMonth() + 1) + '-' + p(date.getDate()) + 'T' + p(date.getHours()) + ':' + p(date.getMinutes());
   }
 
   function formatCompleted(value) {
@@ -70,7 +70,7 @@
   }
 
   function sortTasks(list) {
-    const rank = task => task.status === 'done' ? 2 : task.status === 'review' ? 1 : 0;
+    const rank = task => (task.status === 'done' || task.status === 'cancelled') ? 2 : task.status === 'review' ? 1 : 0;
     return list.slice().sort((a, b) => {
       const diff = rank(a) - rank(b);
       if (diff) return diff;
@@ -127,7 +127,7 @@
       let body = '';
       if (current.length) {
         body = current.slice(0, 3).map(task => {
-          const due = store.dueInfo(task.due);
+          const due = store.dueInfo(task.due, task.priority);
           return `
             <div class="t-board-task${task.status === 'review' ? ' review' : ''}">
               <b>${esc(task.title)}</b>
@@ -156,11 +156,11 @@
   /* ---------- список задач ---------- */
 
   function taskCard(task) {
-    const due = store.dueInfo(task.due);
+    const due = store.dueInfo(task.due, task.priority);
     const isEditing = editingId === task.id;
     const dueLabel = task.status === 'done'
       ? 'Выполнено' + (formatCompleted(task.completedAt) ? ' ' + formatCompleted(task.completedAt) : '')
-      : due.label;
+      : task.status === 'cancelled' ? 'Отменена: не выполнена в срок' : due.label;
     const overdue = due.overdue && task.status !== 'done';
     const statusOptions = Object.keys(store.STATUS).map(key =>
       `<option value="${esc(key)}"${key === task.status ? ' selected' : ''}>${esc(store.STATUS[key].label)}</option>`
@@ -195,7 +195,7 @@
     const all = store.all();
     let list = all;
     if (employeeFilter) list = list.filter(task => task.assigneeId === employeeFilter);
-    if (statusFilter === 'overdue') list = list.filter(task => task.status !== 'done' && window.TasksStore.dueInfo(task.due).overdue);
+    if (statusFilter === 'overdue') list = list.filter(task => !store.isClosed(task) && window.TasksStore.dueInfo(task.due).overdue);
     else if (statusFilter) list = list.filter(task => task.status === statusFilter);
     list = sortTasks(list);
 
@@ -240,7 +240,7 @@
     titleInput.value = task.title;
     descInput.value = task.description || '';
     assigneeInput.value = task.assigneeId;
-    dueInput.value = task.due || '';
+    dueInput.value = task.due ? (String(task.due).length === 10 ? task.due + 'T23:59' : String(task.due).slice(0, 16)) : '';
     dueInput.min = '';
     priorityInput.value = task.priority || 'normal';
     $('#taskFormTitle').textContent = 'Редактировать задачу';
@@ -335,7 +335,8 @@
   $('#taskAdminList').addEventListener('change', event => {
     const select = event.target.closest('[data-status-id]');
     if (!select) return;
-    const task = store.update(select.dataset.statusId, { status: select.value });
+    const prev = (store.all().find(item => item.id === select.dataset.statusId) || {}).status;
+    const task = store.update(select.dataset.statusId, prev === 'cancelled' && select.value !== 'cancelled' ? { status: select.value, reopen: true } : { status: select.value });
     if (task) showToast('Статус задачи обновлён');
   });
 

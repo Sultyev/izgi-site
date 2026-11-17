@@ -76,6 +76,99 @@ async function notify(userId, payload) {
   } catch (_) { /* уведомления не должны ломать сохранение задач */ }
 }
 
+/* ---------- рейтинг сотрудников ---------- */
+const TZ = "+06:00";
+const GRACE = { low: 5, normal: 3, high: 2 };
+const REMIND = [300, 120, 60, 30];
+const STATUS_ALL = [...STATUS, "cancelled"];
+const MONTHS = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
+const dueMs = (v) => { if (!v) return NaN; const s = String(v); return Date.parse(s.length > 10 ? s.slice(0, 16) + ":00" + TZ : s + "T23:59:00" + TZ); };
+const graceMs = (p) => (GRACE[p] || 3) * 3600e3;
+const r1 = (x) => Math.round(x * 10) / 10;
+const monthOf = (ms) => new Date(ms + 6 * 3600e3).toISOString().slice(0, 7);
+const addMonth = (k, n) => { let [y, m] = k.split("-").map(Number); m += n; while (m > 12) { m -= 12; y++; } while (m < 1) { m += 12; y--; } return y + "-" + String(m).padStart(2, "0"); };
+const isClosed = (t) => t.status === "done" || t.status === "cancelled";
+const pts = (x) => { const a = Math.abs(x), i = Number.isInteger(a), t = a % 100, o = a % 10; return (i ? a : a.toFixed(1)) + " " + (!i ? "балла" : t > 10 && t < 20 ? "баллов" : o === 1 ? "балл" : o > 1 && o < 5 ? "балла" : "баллов"); };
+const fmtLeft = (min) => { const m = Math.max(1, Math.round(min)); return m >= 60 ? Math.floor(m / 60) + " ч" + (m % 60 ? " " + (m % 60) + " мин" : "") : m + " мин"; };
+const fmtDue = (v) => { const s = String(v || ""); const d = s.slice(8, 10) + "." + s.slice(5, 7); return s.length > 10 ? d + " " + s.slice(11, 16) : d; };
+const quote = (t) => "«" + String(t.title || "Задача").slice(0, 60) + "»";
+function rate(R, uid, delta, cap, why, taskId, notes) {
+  const e = (R.users[uid] = R.users[uid] || { score: 10, log: [] });
+  const before = e.score;
+  let next = r1(before + delta);
+  if (delta > 0 && cap != null) next = Math.min(next, Math.max(cap, before));
+  next = Math.max(0, next);
+  const diff = r1(next - before);
+  if (!diff) return;
+  e.score = next;
+  e.log.unshift({ t: Date.now(), d: diff, s: next, why, task: taskId || "" });
+  e.log = e.log.slice(0, 100);
+  notes.push({ uid, title: diff > 0 ? "Начислено " + pts(diff) : "Списано " + pts(diff), body: why + ". Рейтинг: " + next.toFixed(1) });
+}
+function scoreSubmit(t, R, notes, now) {
+  if (t.scored || !t.assigneeId) return;
+  t.submittedAt = t.submittedAt || now;
+  const due = dueMs(t.due);
+  if (isNaN(due)) { t.scored = "none"; return; }
+  if (now <= due) { t.scored = "ontime"; rate(R, t.assigneeId, 0.1, 10, "Выполнено вовремя: " + quote(t), t.id, notes); }
+  else { t.scored = "late"; rate(R, t.assigneeId, -0.5, null, "Просрочка: " + quote(t), t.id, notes); }
+}
+let lastTick = 0;
+async function tick(force) {
+  const now = Date.now(), notes = [];
+  if (!force && now - lastTick < 20000) return notes;
+  lastTick = now;
+  const tasks = await get("tasks", []);
+  const R = await get("ratings", { users: {}, meta: {} });
+  R.users = R.users || {}; R.meta = R.meta || {};
+  const rbefore = JSON.stringify(R);
+  let dt = false;
+  const cur = monthOf(now);
+  if (!R.meta.closed) R.meta.closed = addMonth(cur, -1);
+  for (let i = 0; i < 24 && addMonth(R.meta.closed, 1) < cur; i++) {
+    const mk = addMonth(R.meta.closed, 1), by = {};
+    for (const t of tasks) { const d = dueMs(t.due); if (t.assigneeId && !isNaN(d) && monthOf(d) === mk) (by[t.assigneeId] = by[t.assigneeId] || []).push(t); }
+    for (const uid of Object.keys(by)) if (by[uid].every((t) => t.scored === "ontime")) rate(R, uid, 1, 11, "Месяц без нарушений (" + MONTHS[Number(mk.slice(5)) - 1] + " " + mk.slice(0, 4) + ")", "", notes);
+    R.meta.closed = mk;
+  }
+  for (const t of tasks) {
+    if (!t.assigneeId || isClosed(t)) continue;
+    const due = dueMs(t.due);
+    if (isNaN(due)) continue;
+    if (t.remindDue !== due) { const win = due - (Date.parse(t.createdAt) || now); t.reminded = REMIND.filter((m) => m * 60000 >= win); t.remindDue = due; dt = true; }
+    if ((t.status === "new" || t.status === "progress") && !t.scored) {
+      if (now > due + graceMs(t.priority)) {
+        t.status = "cancelled"; t.cancelledAt = now; t.scored = "cancelled"; dt = true;
+        rate(R, t.assigneeId, -1, null, "Задача отменена: не выполнена в срок " + quote(t), t.id, notes);
+        continue;
+      }
+      const leftMin = (due - now) / 60000;
+      if (leftMin > 0) {
+        const fresh = REMIND.filter((m) => leftMin <= m && !(t.reminded || []).includes(m));
+        if (fresh.length) {
+          t.reminded = [...(t.reminded || []), ...fresh]; dt = true;
+          notes.push({ uid: t.assigneeId, title: "Дедлайн через " + fmtLeft(leftMin), body: quote(t) + " · до " + fmtDue(t.due), url: "tasks.html", tag: "dl-" + t.id + "-" + Math.min(...fresh) });
+        }
+      }
+    }
+  }
+  if (dt) await put("tasks", tasks);
+  if (JSON.stringify(R) !== rbefore) await put("ratings", R);
+  return notes;
+}
+function flush(notes) {
+  if (!notes.length) return null;
+  const job = Promise.all(notes.map((n) => notify(n.uid, { title: n.title, body: n.body, url: n.url || "tasks.html#rating", tag: n.tag || "rt-" + Math.random().toString(36).slice(2, 8) })));
+  if (globalThis.EdgeRuntime && EdgeRuntime.waitUntil) { EdgeRuntime.waitUntil(job); return null; }
+  return job;
+}
+function ratingView(R, me, mgr, list) {
+  const out = {};
+  for (const [id, e] of Object.entries(R.users || {})) if (mgr || id === me.id) out[id] = { score: e.score, log: e.log.slice(0, 30) };
+  for (const u of list) if (u.role === "employee" && (mgr || u.id === me.id) && !out[u.id]) out[u.id] = { score: 10, log: [] };
+  return out;
+}
+
 async function loadUsers() {
   let list = await get("users", null);
   if (!list) {
@@ -98,6 +191,14 @@ async function handle(req) {
   const list = await loadUsers();
   if (!list.length) return json({ error: "Сервер не настроен: задайте секреты DIRECTOR_LOGIN и DIRECTOR_PASSWORD." }, 500);
 
+  if ((path === "/cron" || path === "/") && (m === "GET" || m === "POST")) {
+    const key = env("CRON_SECRET");
+    if (key && req.headers.get("x-cron-secret") !== key && url.searchParams.get("key") !== key) return json({ error: "Нет доступа." }, 403);
+    const notes = await tick(true);
+    const job = flush(notes);
+    if (job) await job;
+    return json({ ok: true, notes: notes.length });
+  }
   if (path === "/requests" && m === "POST") {
     if (body.website) return json({ ok: true });
     const name = String(body.name || "").trim().slice(0, 80), phone = String(body.phone || "").trim().slice(0, 30);
@@ -137,29 +238,53 @@ async function handle(req) {
   const mine = (t) => dir || t.assigneeId === me.id;
 
   if (path === "/state" && m === "GET") {
-    const out = { users: list.map(pub), tasks: (await get("tasks", [])).filter(mine), avatars: await get("avatars", {}) };
+    const pre = flush(await tick(false));
+    if (pre) await pre;
+    const out = { users: list.map(pub), tasks: (await get("tasks", [])).filter(mine), avatars: await get("avatars", {}), ratings: ratingView(await get("ratings", { users: {}, meta: {} }), me, dir, list) };
     if (can(me, "content")) out.content = await get("content", {});
     return json(out);
   }
   if (path === "/tasks" && m === "PUT") {
+    const notes = [...(await tick(true))];
     const inc = Array.isArray(body.tasks) ? body.tasks : [];
     let all = await get("tasks", []);
+    const R = await get("ratings", { users: {}, meta: {} });
+    R.users = R.users || {}; R.meta = R.meta || {};
+    const rbefore = JSON.stringify(R);
+    const old = new Map(all.map((t) => [t.id, t]));
+    const SRV = ["scored", "submittedAt", "cancelledAt", "reminded", "remindDue"];
+    const now = Date.now();
     let fresh = [];
     if (dir) {
-      const old = new Map(all.map((t) => [t.id, t]));
-      fresh = inc.filter((t) => t.assigneeId && t.assigneeId !== me.id && t.status !== "done" && (!old.has(t.id) || old.get(t.id).assigneeId !== t.assigneeId));
-      all = inc;
-    }
-    else {
+      all = inc.map((t) => {
+        const o = old.get(t.id), out = { ...t };
+        for (const k of SRV) delete out[k];
+        if (o) {
+          for (const k of SRV) if (o[k] !== undefined) out[k] = o[k];
+          if (o.status === "cancelled" && out.status !== "cancelled" && !t.reopen) out.status = "cancelled";
+        }
+        if (!STATUS_ALL.includes(out.status)) out.status = o ? o.status : "new";
+        if (out.status === "cancelled" && (!o || o.status !== "cancelled")) { out.cancelledAt = out.cancelledAt || now; out.scored = out.scored || "manual"; }
+        delete out.reopen;
+        return out;
+      });
+      fresh = all.filter((t) => t.assigneeId && t.assigneeId !== me.id && !isClosed(t) && (!old.has(t.id) || old.get(t.id).assigneeId !== t.assigneeId));
+    } else {
       const byId = new Map(inc.map((t) => [t.id, t]));
-      all = all.map((t) => { const n = byId.get(t.id); return n && t.assigneeId === me.id && STATUS.includes(n.status) ? { ...t, status: n.status, startedAt: n.startedAt || null, completedAt: n.completedAt || null } : t; });
+      all = all.map((t) => { const n = byId.get(t.id); if (!n || t.assigneeId !== me.id || t.status === "cancelled" || !STATUS.includes(n.status)) return t; return { ...t, status: n.status, startedAt: n.startedAt || null, completedAt: n.completedAt || null }; });
+    }
+    for (const t of all) {
+      const o = old.get(t.id);
+      if (o && (o.status === "new" || o.status === "progress") && (t.status === "review" || t.status === "done")) scoreSubmit(t, R, notes, now);
     }
     await put("tasks", all);
-    if (fresh.length) {
-      const job = Promise.all(fresh.map((t) => notify(t.assigneeId, { title: "Новая задача", body: String(t.title || "Задача") + (t.due ? " · срок: " + t.due : ""), url: "tasks.html", tag: "task-" + t.id })));
-      if (globalThis.EdgeRuntime && EdgeRuntime.waitUntil) EdgeRuntime.waitUntil(job); else await job;
-    }
-    return json({ tasks: all.filter(mine) });
+    if (JSON.stringify(R) !== rbefore) await put("ratings", R);
+    const job = Promise.all([
+      ...fresh.map((t) => notify(t.assigneeId, { title: "Новая задача", body: String(t.title || "Задача") + (t.due ? " · срок: " + fmtDue(t.due) : ""), url: "tasks.html", tag: "task-" + t.id })),
+      flush(notes) || Promise.resolve()
+    ]);
+    if (globalThis.EdgeRuntime && EdgeRuntime.waitUntil) EdgeRuntime.waitUntil(job); else await job;
+    return json({ tasks: all.filter(mine), ratings: ratingView(R, me, dir, list) });
   }
   if (path === "/settings" && m === "PUT") {
     if (!full(me)) return json({ error: "Менять настройки сайта могут директор и сотрудники с полным доступом." }, 403);

@@ -204,3 +204,22 @@ button.t-stat:focus-visible{outline:3px solid #0057b8;outline-offset:2px}
 .pick-main strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pick-main span{font-size:.82rem;color:#5a6068}
 .pick-row .btn[disabled],#tPickAll[disabled]{opacity:.55;cursor:default}
+
+/* рейтинг в панели */
+.rt-rules-admin{margin:10px 0 14px;padding:10px 14px;border-radius:12px;background:#f2f4f7;font-size:.88rem;color:#4a5b7a}
+.rt-board{display:grid;gap:10px}
+.rt-row{border:1px solid #e3e8ee;border-radius:14px;background:#fff;overflow:hidden}
+.rt-head{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:0;background:none;cursor:pointer;text-align:left;font:inherit}
+.rt-rank{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#eaf0f3;font-weight:700;font-size:.8rem;color:#00106b}
+.rt-head .s-avatar{width:40px;height:40px;flex:none}
+.rt-who{flex:1;min-width:0;display:grid}.rt-who small{color:#5a6068}
+.rt-pill{padding:6px 14px;border-radius:999px;font-weight:800;color:#fff;background:#16a34a}
+.rt-pill.gold{background:#f0a020}.rt-pill.good{background:#16a34a}.rt-pill.mid{background:#d97706}.rt-pill.low{background:#e5484d}
+.rt-hist{display:none;list-style:none;margin:0;padding:4px 16px 14px;gap:8px}
+.rt-row.open .rt-hist{display:grid}
+.rt-hist li{display:grid;grid-template-columns:48px 1fr auto auto;gap:10px;align-items:baseline;font-size:.86rem;border-top:1px solid #f0f2f5;padding-top:8px}
+.rt-hist li b{font-weight:800}.rt-hist li.up b{color:#16a34a}.rt-hist li.down b{color:#e5484d}
+.rt-hist li em{font-style:normal;color:#5a6068}.rt-hist li time{color:#6b7480;font-size:.78rem}
+.rt-hist li.none{display:block;color:#6b7480}
+@media(max-width:600px){.rt-hist li{grid-template-columns:44px 1fr}.rt-hist li em,.rt-hist li time{grid-column:2}}
+.s-badge.cancelled{background:#fde4e4;color:#a11a1f}

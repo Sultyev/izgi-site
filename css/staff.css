@@ -894,3 +894,24 @@ button.t-stat:focus-visible{outline:3px solid #0057b8;outline-offset:2px}
 .push-help{display:block;margin-top:6px;padding:0;border:0;background:none;color:#0057b8;font:600 .78rem Montserrat,sans-serif;text-decoration:underline;cursor:pointer}
 
 .push-help + .push-help{margin-top:2px}
+
+/* рейтинг в кабинете */
+.t-rating{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;padding:22px 24px;margin:0 0 16px;border-radius:20px;--p:100%}
+.rt-ring{position:relative;display:grid;place-items:center;align-content:center;width:112px;height:112px;border-radius:50%;background:conic-gradient(#01a09c var(--p),#e3e8ee 0);text-align:center}
+.rt-ring::before{content:"";position:absolute;inset:9px;border-radius:50%;background:#fff}
+.rt-ring b,.rt-ring span{position:relative}
+.rt-ring b{font-size:1.9rem;line-height:1;color:#00106b}
+.rt-ring span{font-size:.72rem;color:#5a6068;margin-top:2px}
+.t-rating.low .rt-ring{background:conic-gradient(#e5484d var(--p),#e3e8ee 0)}
+.t-rating.bonus .rt-ring{background:conic-gradient(#f0a020 100%,#e3e8ee 0)}
+.rt-body h2{margin:0 0 4px;font-size:1.15rem}
+.rt-body p{margin:0 0 10px;font-size:.9rem;color:#4a5b7a}
+.rt-log{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:6px}
+.rt-log li{display:grid;grid-template-columns:48px 1fr auto;gap:10px;align-items:baseline;font-size:.85rem}
+.rt-log li b{font-weight:800}.rt-log li.up b{color:#16a34a}.rt-log li.down b{color:#e5484d}
+.rt-log li time{color:#6b7480;font-size:.78rem}.rt-log li.none{display:block;color:#6b7480}
+.rt-rules summary{cursor:pointer;font-weight:700;font-size:.85rem;color:#0057b8}
+.rt-rules ul{margin:8px 0 0;padding-left:18px;font-size:.85rem;color:#4a5b7a;display:grid;gap:4px}
+@media(max-width:600px){.t-rating{grid-template-columns:1fr;justify-items:center;text-align:center}.rt-log li{grid-template-columns:44px 1fr}.rt-log li time{grid-column:2}}
+.s-badge.cancelled{background:#fde4e4;color:#a11a1f}
+.t-task.cancelled{opacity:.8;border-left-color:#e5484d}

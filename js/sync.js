@@ -3,7 +3,7 @@
 (function () {
   const API = window.IZGI_API || '/api';
   const SK = 'izgi.session.v2';
-  const K = { users: 'izgi.staff.users.v1', tasks: 'izgi.tasks.v1', av: 'izgi.avatars.v1', content: 'izgi.content.v1' };
+  const K = { users: 'izgi.staff.users.v1', tasks: 'izgi.tasks.v1', av: 'izgi.avatars.v1', content: 'izgi.content.v1', ratings: 'izgi.ratings.v1' };
   const raw = Storage.prototype.setItem;
   const sess = () => { try { return JSON.parse(localStorage.getItem(SK) || sessionStorage.getItem(SK) || 'null'); } catch (e) { return null; } };
   const keep = (o) => { try { localStorage.removeItem(SK); sessionStorage.removeItem(SK); (o.persist ? localStorage : sessionStorage).setItem(SK, JSON.stringify(o)); } catch (e) { /* noop */ } };
@@ -42,6 +42,7 @@
       if (notify) dispatchEvent(new StorageEvent('storage', { key: k, newValue: s }));
     };
     set(K.users, st.users || []); set(K.tasks, st.tasks || []); set(K.av, st.avatars || {});
+    if (st.ratings) set(K.ratings, st.ratings);
     if (st.content) set(K.content, st.content);
     lastAv = st.avatars || {};
   }
@@ -59,7 +60,7 @@
         const d = await r.json().catch(() => ({}));
         if (r.status === 401) { clear(); location.replace('staff.html'); return; }
         if (!r.ok) { toast(d.error || 'Не удалось сохранить изменения.'); boot(); }
-        else if (path === '/tasks' && d.tasks) apply({ users: JSON.parse(localStorage.getItem(K.users) || '[]'), tasks: d.tasks, avatars: JSON.parse(localStorage.getItem(K.av) || '{}') }, true);
+        else if (path === '/tasks' && d.tasks) apply({ users: JSON.parse(localStorage.getItem(K.users) || '[]'), tasks: d.tasks, avatars: JSON.parse(localStorage.getItem(K.av) || '{}'), ratings: d.ratings }, true);
       })
       .catch(() => toast('Нет связи с сервером — изменения не сохранены.'))
       .finally(() => { pending--; });

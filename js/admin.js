@@ -448,7 +448,7 @@ $('#nAdd').addEventListener('click',()=>{
     const isDir=me.role==='director';
     document.title=(isDir?'Панель директора':'Панель управления')+' — ИЗГИ';
     const pt=$('#panelTitle');if(pt)pt.textContent=isDir?'Панель директора':'Панель управления';
-    const need={tasks:'tasks',staff:'staff',requests:'requests'};
+    const need={tasks:'tasks',staff:'staff',requests:'requests',rating:'tasks'};
     const tabs=$$('#tabs button');
     tabs.forEach(b=>{const t=b.dataset.tab;if(t==='settings'?!auth.isFull(me):!auth.can(me,need[t]||'content'))b.hidden=true});
     const first=tabs.find(b=>!b.hidden),on=tabs.find(b=>b.classList.contains('on'));
