@@ -227,8 +227,8 @@
     $('#rtScore').textContent = score.toFixed(1);
     $('#rtMax').textContent = score > 10 ? 'бонус +' + (score - 10).toFixed(1) : 'из 10';
     card.style.setProperty('--p', Math.min(100, Math.max(0, score / 10 * 100)) + '%');
+    card.style.setProperty('--ring', store.ratingColor(score).c1);
     card.classList.toggle('bonus', score > 10);
-    card.classList.toggle('low', score < 7);
     $('#rtHint').textContent = score >= 10
       ? 'Высший балл. Так держать: выполняйте задачи вовремя.'
       : 'Каждая задача, сданная вовремя, возвращает 0.1 балла, пока рейтинг не вернётся к 10.';

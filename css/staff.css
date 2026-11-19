@@ -897,13 +897,12 @@ button.t-stat:focus-visible{outline:3px solid #0057b8;outline-offset:2px}
 
 /* рейтинг в кабинете */
 .t-rating{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;padding:22px 24px;margin:0 0 16px;border-radius:20px;--p:100%}
-.rt-ring{position:relative;display:grid;place-items:center;align-content:center;width:112px;height:112px;border-radius:50%;background:conic-gradient(#01a09c var(--p),#e3e8ee 0);text-align:center}
+.rt-ring{position:relative;display:grid;place-items:center;align-content:center;width:112px;height:112px;border-radius:50%;background:conic-gradient(var(--ring,#01a09c) var(--p),#e3e8ee 0);text-align:center;transition:background .4s}
 .rt-ring::before{content:"";position:absolute;inset:9px;border-radius:50%;background:#fff}
 .rt-ring b,.rt-ring span{position:relative}
 .rt-ring b{font-size:1.9rem;line-height:1;color:#00106b}
 .rt-ring span{font-size:.72rem;color:#5a6068;margin-top:2px}
-.t-rating.low .rt-ring{background:conic-gradient(#e5484d var(--p),#e3e8ee 0)}
-.t-rating.bonus .rt-ring{background:conic-gradient(#f0a020 100%,#e3e8ee 0)}
+.t-rating.bonus{--p:100%}
 .rt-body h2{margin:0 0 4px;font-size:1.15rem}
 .rt-body p{margin:0 0 10px;font-size:.9rem;color:#4a5b7a}
 .rt-log{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:6px}

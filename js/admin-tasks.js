@@ -145,7 +145,7 @@
         <div class="t-board-card">
           <div class="t-board-person">
             <span class="s-avatar" data-uid="${esc(user.id)}">${esc(initials(user.name))}</span>
-            <div><strong>${esc(user.name)}</strong><span>${esc(user.position)}</span></div>
+            <div><strong>${esc(user.name)}${user.role === 'employee' ? store.ratingChip(store.ratingFor(user.id).score) : ''}</strong><span>${esc(user.position)}</span></div>
             <span class="t-board-count" title="Активные задачи">${esc(countLabel)}</span>
           </div>
           <div class="t-board-current">${body}</div>
@@ -367,7 +367,7 @@
         <div class="s-account">
           <span class="s-avatar" data-uid="${esc(user.id)}"${editable ? ' data-edit="1"' : ''}>${esc(initials(user.name))}</span>
           <div class="s-account-main">
-            <strong>${esc(user.name)}</strong>
+            <strong>${esc(user.name)}${user.role === 'employee' ? store.ratingChip(store.ratingFor(user.id).score) : ''}</strong>
             <span>${esc(user.position)}</span>
             <div class="s-account-login"><code>${esc(user.login)}</code>${badge}</div>
           </div>
@@ -513,6 +513,8 @@
     showToast('Аккаунт удалён');
     renderEmployeeSelects(); renderBoard(); renderAccounts(); renderTaskList();
   });
+
+  window.addEventListener('storage', e => { if (e.key === store.RKEY) { renderBoard(); renderAccounts(); } });
 
   /* ---------- общие обновления ---------- */
 

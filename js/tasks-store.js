@@ -279,6 +279,23 @@
   }
   const isClosed = task => task.status === 'done' || task.status === 'cancelled';
 
+  /* Цвет рейтинга плавно меняется: 10 — зелёный, 5 — жёлтый, 2 и ниже — красный; выше 10 (бонус) — изумрудный. */
+  function ratingColor(score) {
+    const s = Number(score);
+    let h;
+    if (s > 10) h = 152;
+    else if (s >= 5) h = 48 + (s - 5) / 5 * 88;
+    else if (s > 2) h = (s - 2) / 3 * 48;
+    else h = 0;
+    h = Math.round(h);
+    const light = h > 28 && h < 90;
+    return { h, c1: 'hsl(' + h + ' 78% ' + (light ? 52 : 46) + '%)', c2: 'hsl(' + Math.max(h - 14, 0) + ' 80% ' + (light ? 44 : 38) + '%)', text: light ? '#3b2a00' : '#fff' };
+  }
+  function ratingChip(score) {
+    const c = ratingColor(score), v = Number(score).toFixed(1);
+    return '<span class="rt-chip" title="Рейтинг ' + v + '" style="background:linear-gradient(135deg,' + c.c1 + ',' + c.c2 + ');color:' + c.text + '"><svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg>' + v + '</span>';
+  }
+
   /* Рейтинг считает сервер; здесь только чтение того, что пришло. */
   const RKEY = 'izgi.ratings.v1';
   function ratings() { try { return JSON.parse(localStorage.getItem(RKEY) || '{}'); } catch (e) { return {}; } }
@@ -319,6 +336,8 @@
     isClosed,
     ratings,
     ratingFor,
+    ratingColor,
+    ratingChip,
     RKEY,
     GRACE_H,
     stats
